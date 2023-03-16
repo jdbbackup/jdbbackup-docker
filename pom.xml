@@ -37,17 +37,22 @@
 			<version>1.0.0</version>
 		</dependency>
 		<dependency>
+			<groupId>ch.qos.logback</groupId>
+			<artifactId>logback-classic</artifactId>
+			<version>1.4.5</version>
+		</dependency>
+		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter</artifactId>
 			<version>5.8.2</version>
 			<scope>test</scope>
 		</dependency>
-		<dependency>
+		<!--dependency>
 			<groupId>org.mockito</groupId>
 			<artifactId>mockito-junit-jupiter</artifactId>
 			<version>5.1.1</version>
 			<scope>test</scope>
-		</dependency>
+		</dependency-->
 	</dependencies>
 	<build>
 		<plugins>
@@ -82,12 +87,12 @@
 								</filter>
 							</filters>
 							<transformers>
-								<!-- Merges services declaration files --> 
+								<!-- Merges services declaration files -->
 								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-                  					<resource>META-INF/services/com.fathzer.jdbbackup.DestinationManager</resource>
+									<resource>META-INF/services/com.fathzer.jdbbackup.DestinationManager</resource>
 								</transformer>
 								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-                  					<resource>META-INF/services/com.fathzer.jdbbackup.DBDumper</resource>
+									<resource>META-INF/services/com.fathzer.jdbbackup.DBDumper</resource>
 								</transformer>
 							</transformers>
 						</configuration>
