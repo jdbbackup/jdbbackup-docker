@@ -1,0 +1,16 @@
+{
+	"tasks": [
+		{
+			"name":"toS3",
+			"source":"fake://toS3",
+			"destinations": ["s3://{f=/home/jma/keys/s3.txt}@eu-west-3:jm-astesana-test/jdbbackup"],
+			"schedule":"@daily"
+		},
+		{
+			"name":"toFile",
+			"source":"fake://toFile",
+			"destinations": ["file://backupfile"],
+			"schedule":"@daily"
+		}
+	]
+}
