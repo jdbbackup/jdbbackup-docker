@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Arrays;
-import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -46,17 +46,15 @@ class PluginsManager {
 	void load(Configuration conf) throws IOException {
 		load();
 		log.info("Available data base dumpers:");
-		final Collection<DBDumper> dumpers = JDbBackup.getDBDumpers();
-		dumpers.forEach(dd -> log.info("  . {} -> {}", dd.getScheme(), dd.getClass().getName()));
+		final Map<String, DBDumper> dumpers = JDbBackup.getDBDumpers().getLoaded();
+		dumpers.values().forEach(dd -> log.info("  . {} -> {}", dd.getScheme(), dd.getClass().getName()));
 		log.info("Available destination managers:");
 		@SuppressWarnings("rawtypes")
-		final Collection<DestinationManager> managers = JDbBackup.getDestinationManagers();
-		managers.forEach(dm -> log.info("  . {} -> {}", dm.getScheme(), dm.getClass().getName()));
+		final Map<String, DestinationManager> managers = JDbBackup.getDestinationManagers().getLoaded();
+		managers.values().forEach(dm -> log.info("  . {} -> {}", dm.getScheme(), dm.getClass().getName()));
 		
-		final Set<String> dumperSchemes = dumpers.stream().map(DBDumper::getScheme).collect(Collectors.toSet());
-		final Set<String> missingDumpers = conf.getTasks().stream().map(Parameters.Task::getSource).map(this::getScheme).filter(s -> !dumperSchemes.contains(s)).collect(Collectors.toSet());
-		final Set<String> managerSchemes = managers.stream().map(DestinationManager::getScheme).collect(Collectors.toSet());
-		final Set<String> missingManagers = conf.getTasks().stream().flatMap(task -> task.getDestinations().stream()).map(this::getScheme).filter(s -> !managerSchemes.contains(s)).collect(Collectors.toSet());
+		final Set<String> missingDumpers = conf.getTasks().stream().map(Parameters.Task::getSource).map(this::getScheme).filter(s -> !dumpers.containsKey(s)).collect(Collectors.toSet());
+		final Set<String> missingManagers = conf.getTasks().stream().flatMap(task -> task.getDestinations().stream()).map(this::getScheme).filter(s -> !managers.containsKey(s)).collect(Collectors.toSet());
 		if (!missingDumpers.isEmpty()) {
 			log.info("Data base dumpers to search on registry: {}",missingDumpers);
 		}

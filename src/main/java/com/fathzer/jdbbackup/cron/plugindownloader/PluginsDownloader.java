@@ -26,7 +26,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fathzer.jdbbackup.DBDumper;
 import com.fathzer.jdbbackup.JDbBackup;
 import com.fathzer.jdbbackup.cron.plugindownloader.RegistryRecord.Registry;
 import com.fathzer.jdbbackup.utils.ProxySettings;
@@ -35,8 +34,10 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class PluginsDownloader {
-	private static final String REGISTRY_ROOT_URI = System.getProperty("pluginRegistry", "https://jdbbackup.github.io/webtest/registry/");
-	private static final Path DOWNLOAD_DIR = Paths.get(System.getProperty("downloadedPlugins", "downloadedPlugins"));
+	/** The root URI of remote plugin registry. */
+	private static final URI REGISTRY_ROOT_URI = URI.create(System.getProperty("pluginRegistry", "https://jdbbackup.github.io/web/registry/"));
+	/** The directory where downloaded plugins are stored. */
+	public static final Path DOWNLOAD_DIR = Paths.get(System.getProperty("downloadedPlugins", "downloadedPlugins"));
 	private static final boolean CLEAR_DOWNLOAD_DIR = Boolean.getBoolean("clearDownloadedPlugins");
 	
 	private ProxySettings proxy;
@@ -44,6 +45,10 @@ public class PluginsDownloader {
 	
 	private HttpClient httpClient;
 	
+	/** Constructor.
+	 * @param proxy A proxy to use to connect to the remote registry (null if no proxy is required).
+	 * @param version The version of plugins client.
+	 */
 	public PluginsDownloader(ProxySettings proxy, String version) {
 		this.proxy = proxy;
 		this.version = version;
@@ -70,8 +75,8 @@ public class PluginsDownloader {
 			clean();
 		}
 		final Registry registry = getRegistry();
-		checkMissing(missingDumpers, registry.getDumpers(), "dumpers");
-		checkMissing(missingManagers, registry.getManagers(), "managers");
+		checkMissingKeys(missingDumpers, registry.getDumpers(), "dumpers");
+		checkMissingKeys(missingManagers, registry.getManagers(), "managers");
 		if (!Files.exists(DOWNLOAD_DIR)) {
 			Files.createDirectories(DOWNLOAD_DIR);
 		}
@@ -87,10 +92,13 @@ public class PluginsDownloader {
 	
 	private void verify(Set<String> missingDumpers, Set<String> missingManagers) {
 		//TODO core should give access to its internal plugin registries
-		JDbBackup.getDBDumpers().stream().map(DBDumper::getScheme);
+//		JDbBackup.getDBDumpers().stream().map(DBDumper::getScheme);
 		
 	}
 
+	/** Loads all plugins available in the {@link #DOWNLOAD_DIR} directory
+	 * @throws IOException if something went wrong.
+	 */
 	public void load() throws IOException {
 		URL[] urls;
 		try (Stream<Path> files = getChildrenFiles(DOWNLOAD_DIR)) {
@@ -107,6 +115,12 @@ public class PluginsDownloader {
 		JDbBackup.loadPlugins(new URLClassLoader(urls));
 	}
 	
+	/** Downloads an URI to a file.
+	 * @param uri The uri to download
+	 * @param file 
+	 * @return The path where the URI body was downloaded.
+	 * @throws UncheckedIOException if something went wrong
+	 */
 	private Path download(URI uri) {
 		final Path file = DOWNLOAD_DIR.resolve(Paths.get(uri.getPath()).getFileName());
 		log.info("Start downloading {} to file {}",uri, file);
@@ -122,15 +136,21 @@ public class PluginsDownloader {
 		return file;
 	}
 	
-	private void checkMissing(Set<String> schemes, Map<String, ?> schemeToPath, String wording) {
-		final Set<String> missing = schemes.stream().filter(s -> !schemeToPath.containsKey(s)).collect(Collectors.toSet());
+	/** Checks that plugins are registered in a map.
+	 * @param keys The keys to check.
+	 * @param map A map with String key in which to search
+	 * @param wording a wording used for exception message generation
+	 * @throws IllegalArgumentException if some keys are missing
+	 */
+	private <T> void checkMissingKeys(Set<T> keys, Map<T, ?> map, String wording) {
+		final Set<T> missing = keys.stream().filter(s -> !map.containsKey(s)).collect(Collectors.toSet());
 		if (!missing.isEmpty()) {
 			throw new IllegalArgumentException("Unable to find the following "+wording+": "+missing);
 		}
 	}
 	
 	private Registry getRegistry() throws IOException {
-		final URI url = URI.create(REGISTRY_ROOT_URI+version+".json");
+		final URI url = REGISTRY_ROOT_URI.resolve(version+".json");
 		log.info("Downloading plugin registry at {}",url);
 		final HttpRequest request = getRequestBuilder().uri(url).build();
 		try {

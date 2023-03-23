@@ -26,8 +26,11 @@ By default, the path of the file is */tasks.json*. You can define the *TASKS_PAT
 You can easily pass a local file to the image using the --volume docker option:  
 ```--volume /home/account/path/backupTasks.json:/tasks.json```
 
-## Available destinations
-- file: Saves the backup to a local file to a local file [see jdbbackup-core](). //TODO
+### Available sources
+- mysql: //TODO
+
+### Available destinations
+- file: Saves the backup to a local file to a local file [see jdbbackup-core](https://github.com/jdbbackup/jdbbackup-core).
 - sftp: Saves the backup to a sftp server [](). //TODO
 - s3: Saves the backup to an [Amazon S3](https://aws.amazon.com/s3/) bucket [](). //TODO
 - dropbox: Saves the backup to a [Dropbox](https://www.dropbox.com/) account [](). //TODO
@@ -60,7 +63,7 @@ final URI url = URI.create(REGISTRY_ROOT_URI+version+".json");
 ```
 Warning absolute URL are mandatory.
 
-### Logging
+## Logging
 TODO
 
 # TODO
