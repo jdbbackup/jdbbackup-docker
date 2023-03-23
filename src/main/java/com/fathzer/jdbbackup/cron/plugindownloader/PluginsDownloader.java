@@ -18,6 +18,7 @@ import java.net.http.HttpResponse.BodyHandlers;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
@@ -67,7 +68,7 @@ public class PluginsDownloader {
 	}
 
 	private Stream<Path> getChildrenFiles(Path path) throws IOException {
-		return Files.find(path, 0, (p, bfa) -> bfa.isRegularFile());
+		return Files.find(path, 1, (p, bfa) -> bfa.isRegularFile());
 	}
 
 	public void load(Set<String> missingDumpers, Set<String> missingManagers) throws IOException {
@@ -84,16 +85,11 @@ public class PluginsDownloader {
 		try {
 			toDownload.stream().forEach(this::download);
 			load();
-			verify(missingDumpers, missingManagers);
+			checkMissingKeys(missingDumpers, JDbBackup.getDBDumpers().getLoaded(),"dumpers");
+			checkMissingKeys(missingManagers, JDbBackup.getDestinationManagers().getLoaded(),"managers");
 		} catch (UncheckedIOException e) {
 			throw e.getCause();
 		}
-	}
-	
-	private void verify(Set<String> missingDumpers, Set<String> missingManagers) {
-		//TODO core should give access to its internal plugin registries
-//		JDbBackup.getDBDumpers().stream().map(DBDumper::getScheme);
-		
 	}
 
 	/** Loads all plugins available in the {@link #DOWNLOAD_DIR} directory
@@ -111,8 +107,9 @@ public class PluginsDownloader {
 		} catch (UncheckedIOException e) {
 			throw e;
 		}
-		log.info("Start loading registy plugins");
+		log.info("Start loading registy plugins from {}",Arrays.asList(urls));
 		JDbBackup.loadPlugins(new URLClassLoader(urls));
+		log.info("Registy plugins are loaded");
 	}
 	
 	/** Downloads an URI to a file.
@@ -123,15 +120,19 @@ public class PluginsDownloader {
 	 */
 	private Path download(URI uri) {
 		final Path file = DOWNLOAD_DIR.resolve(Paths.get(uri.getPath()).getFileName());
-		log.info("Start downloading {} to file {}",uri, file);
-		final HttpRequest request = getRequestBuilder().uri(uri).build();
-		try {
-			getHttpClient().send(request, BodyHandlers.ofFile(file));
-		} catch (InterruptedException e) {
-			Thread.currentThread().interrupt();
-			throw new UncheckedIOException(new IOException(e));
-		} catch (IOException e) {
-			throw new UncheckedIOException(e);
+		if (Files.exists(file)) {
+			log.info("{} was already downloaded to file {}",uri, file);
+		} else {
+			log.info("Start downloading {} to file {}",uri, file);
+			final HttpRequest request = getRequestBuilder().uri(uri).build();
+			try {
+				getHttpClient().send(request, BodyHandlers.ofFile(file));
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+				throw new UncheckedIOException(new IOException(e));
+			} catch (IOException e) {
+				throw new UncheckedIOException(e);
+			}
 		}
 		return file;
 	}
@@ -145,7 +146,7 @@ public class PluginsDownloader {
 	private <T> void checkMissingKeys(Set<T> keys, Map<T, ?> map, String wording) {
 		final Set<T> missing = keys.stream().filter(s -> !map.containsKey(s)).collect(Collectors.toSet());
 		if (!missing.isEmpty()) {
-			throw new IllegalArgumentException("Unable to find the following "+wording+": "+missing);
+			throw new IllegalArgumentException(String.format("Unable to find the following %s: %s", wording, missing));
 		}
 	}
 	
