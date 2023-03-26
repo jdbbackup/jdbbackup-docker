@@ -63,17 +63,18 @@ class Configuration {
 	
 	void schedule() {
 		for (final Parameters.Task task : tasks) {
-			Scheduler scheduler = new Scheduler();
-			scheduler.schedule(toCron4JSchedule(task.getSchedule()), () -> {
+			final Scheduler scheduler = new Scheduler();
+			final Runnable scheduledTask = () -> {
 				try {
 					new JDbBackup().backup(proxy, task.getSource(), task.getDestinations().toArray(String[]::new));
-					log.info("{} task  succeeds", task.getName());
+					log.info("{} task succeeded", task.getName());
 				} catch (Throwable e) {
-					log.error(task.getName()+" task  failed", e);
+					log.error(task.getName()+" task failed", e);
 				}
-			});
+			};
+			scheduler.schedule(toCron4JSchedule(task.getSchedule()), scheduledTask);
 			scheduler.start();
-			log.info("{} is scheduled", task.getName());
+			log.info("{} is scheduled with {} schedule", task.getName(), task.getSchedule());
 		}
 	}
 }

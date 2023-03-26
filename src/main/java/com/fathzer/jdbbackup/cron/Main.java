@@ -8,6 +8,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import com.fathzer.jdbbackup.cron.parameters.Parameters.Task;
+
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -33,14 +35,27 @@ public class Main {
 				exitCode = ERROR;
 			}
 		}
-		System.exit(exitCode);
+		if (exitCode!=OK) {
+			System.exit(exitCode);
+		}
 	}
 	
 	private void doIt(String... args) throws IOException {
 		final Configuration conf = getConfiguration(args.length==1?args[0]:null);
 		new PluginsManager(getVersion()).load(conf);
+		conf.getTasks().forEach(this::check);
+		conf.schedule();
 	}
 	
+	private void check(Task task) {
+		task.getDestinations().forEach(this::checkDestination);
+		//TODO How to check DB seems ok?
+	}
+
+	private void checkDestination(String destination) {
+//TODO		JDbBackup.getDestinationManagers().get(destination)
+	}
+
 	private Configuration getConfiguration(String confFilePath) {
 		try {
 			return new Configuration(getTasksFile(confFilePath));

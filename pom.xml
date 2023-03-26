@@ -42,7 +42,8 @@
 			<version>1.18.26</version>
 			<scope>provided</scope>
 		</dependency>
-		<!--dependency>
+		<!-- Remove these test dependencies.>
+		<dependency>
 			<groupId>com.fathzer</groupId>
 			<artifactId>jdbbackup-dropbox</artifactId>
 			<version>1.0.0</version>
@@ -51,7 +52,8 @@
 			<groupId>com.fathzer</groupId>
 			<artifactId>jdbbackup-sftp</artifactId>
 			<version>1.0.0</version>
-		</dependency-->
+		</dependency>
+		<End of test dependencies -->
 		<dependency>
 			<groupId>ch.qos.logback</groupId>
 			<artifactId>logback-classic</artifactId>
