@@ -12,12 +12,17 @@ import com.fathzer.jdbbackup.cron.parameters.Parameters.Task;
 
 import lombok.extern.slf4j.Slf4j;
 
+/** The main class.
+ */
 @Slf4j
 public class Main {
 	private static final int OK = 0;
 	private static final int ERROR = 1;
 	private static final int WRONG_ARG = 2;
 	
+	/** The main method.
+	 * @param args Program arguments
+	 */
 	public static void main(String... args) {
 		log.info("Starting {} version {}",Main.class.getSimpleName(),getVersion());
 		int exitCode = OK;

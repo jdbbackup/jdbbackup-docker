@@ -1,5 +1,5 @@
 # jdbbackup-docker
-A ready to use docker container that schedules and executes the backup of a database.
+A ready to use docker container that schedules and executes the backup of a data sources.
 
 ## How to use it
 You should provide a json configuration file with the following format
@@ -20,7 +20,7 @@ Only proxy is not mandatory. tasks and destinations should not be empty.
 The container is able to store the backup in various destinations kind (sftp server, s3, etc...) the format of addresses passed in *destinations* attribute depends on the destination kind. Please have a look below at the **Available destinations** to known where to find documentation.  
 More destinations can be added by developing your own plugin. Please have a look at the [jdbbackup-core project](https://github.com/jdbbackup/jdbbackup-core) to know how to do that.
 
-The only database type included in this container is mySQL. You can add your own (Postgres for example) by developing a *DBDumper* plugin. Please have a look at the [jdbbackup-core project](https://github.com/jdbbackup/jdbbackup-core) to know how to do that.
+The only data source type included in this container is mySQL. You can add your own (Postgres for example) by developing a *SourceManager* plugin. Please have a look at the [jdbbackup-core project](https://github.com/jdbbackup/jdbbackup-core) to know how to do that.
 
 By default, the path of the file is */tasks.json*. You can define the *TASKS_PATH* environment variable to use another file.
 You can easily pass a local file to the image using the --volume docker option:  
@@ -40,7 +40,7 @@ To add your own plugins, define the **pluginsDirectory** environment variable an
 Example: ```-e "pluginsDirectory=/plugins" --volume /home/account/path/plugins``̀`
 
 ### Plugin registry
-This image only contains MySQL database dumper and file destination manager. If another source/destination is referenced in the configuration file, without being added through the **pluginsDirectory**, the container automatically search it in an Internet plugin registry.  
+This image only contains MySQL database source manager and file destination manager. If another source/destination is referenced in the configuration file, without being added through the **pluginsDirectory**, the container automatically search it in an Internet plugin registry.  
 
 If you want to delete all already downloaded plugins and reload useful ones at container startup, set the **clearDownloadedPlugins** system property to true.
 
@@ -54,13 +54,15 @@ Your registry should return a json file like the following at the address *root*
 ```
 {
 	"registry": {
-		"managers":{
-			"sftp":"https://jdbbackup.github.io/webtest/artifacts/jdbbackup-sftp-1.0.0.jar",
-			"s3":"https://jdbbackup.github.io/webtest/artifacts/jdbbackup-s3-1.0.0.jar",
-			"gcs":"https://jdbbackup.github.io/webtest/artifacts/jdbbackup-gcs-1.0.0.jar",
-			"dropbox":"https://jdbbackup.github.io/webtest/artifacts/jdbbackup--1.0.0.jar"
+		"destinationManagers":{
+			"sftp":"https://myOwnRepo.com/artifacts/jdbbackup-sftp-1.0.0.jar",
+			"s3":"https://myOwnRepo.com/artifacts/jdbbackup-s3-1.0.0.jar",
+			"gcs":"https://myOwnRepo.com/artifacts/jdbbackup-gcs-1.0.0.jar",
+			"dropbox":"https://myOwnRepo.com/artifacts/jdbbackup-dropbox-1.0.0.jar"
 		},
-		"dumpers":{}
+		"sourceManagers":{
+			"fake":"https://www.astesana.net/jdbbackup/artifacts/jdbbackup-fakesource-1.0.0.jar"
+		}
 	}
 }
 ```
@@ -72,6 +74,5 @@ The default configuration logs to the console, rejecting entries below *info* le
 If you want to change logback configuration, please have a look at [the logback manual](https://logback.qos.ch/manual/configuration.html).
 
 # TODO
-Remove com.fathzer.jdbbackup.tobedeleted package and src/main/resources/META-INF folder  
 Detect missing configuration attributes  
 Verify destination is valid regarding validate method

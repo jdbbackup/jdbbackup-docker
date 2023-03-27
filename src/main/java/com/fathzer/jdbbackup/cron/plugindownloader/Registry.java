@@ -9,8 +9,8 @@ import lombok.Getter;
 class RegistryRecord {
 	@Getter
 	static class Registry {
-		private Map<String, URI> managers;
-		private Map<String, URI> dumpers;
+		private Map<String, URI> destinationManagers;
+		private Map<String, URI> sourceManagers;
 	}
 	
 	private Registry registry;

@@ -20,7 +20,7 @@ class JarIT {
 	void test() throws IOException {
 		// Verify that the META-INF services files are safely merged
 		try (JarFile jar = new JarFile(System.getProperty("jarFile"))) {
-			assertEquals(getExpectedServices(DBDumper.class), getDelaredServices(jar, DBDumper.class),getMessage(DBDumper.class, "DB dumpers"));
+			assertEquals(getExpectedServices(SourceManager.class), getDelaredServices(jar, SourceManager.class),getMessage(SourceManager.class, "Source managers"));
 			assertEquals(getExpectedServices(DestinationManager.class), getDelaredServices(jar, DestinationManager.class),getMessage(DestinationManager.class, "Destination managers"));
 		}
 	}

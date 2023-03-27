@@ -3,13 +3,31 @@
 		{
 			"name":"toS3",
 			"source":"fake://toS3",
-			"destinations": ["s3://{f=/home/jma/keys/s3.txt}@eu-west-3:jm-astesana-test/jdbbackup"],
+			"destinations": ["s3://{f=/home/jma/keys/s3.txt}@eu-west-3:jm-astesana-test/jdbbackup","gcs://jma-bucket/test"],
+			"schedule":"* * * * *"
+		},
+		{
+			"name":"toGCS",
+			"source":"fake://toGCS",
+			"destinations": ["gcs://jma-bucket/test"],
 			"schedule":"@daily"
 		},
 		{
 			"name":"toFile",
 			"source":"fake://toFile",
 			"destinations": ["file://backupfile"],
+			"schedule":"@daily"
+		},
+		{
+			"name":"toDropbox",
+			"source":"fake://toDropbox",
+			"destinations": ["dropbox://{f=/home/jma/keys/dropbox.txt}/jdbbackup/test"],
+			"schedule":"@daily"
+		},
+		{
+			"name":"toSFtp",
+			"source":"fake://toSFtp",
+			"destinations": ["sftp://{f=/home/jma/keys/sftp-u300.txt}@u300/jdbbackup/backupfile"],
 			"schedule":"@daily"
 		}
 	]

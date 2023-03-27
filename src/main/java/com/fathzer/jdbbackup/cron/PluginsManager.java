@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.fathzer.jdbbackup.DBDumper;
+import com.fathzer.jdbbackup.SourceManager;
 import com.fathzer.jdbbackup.DestinationManager;
 import com.fathzer.jdbbackup.JDbBackup;
 import com.fathzer.jdbbackup.cron.parameters.Parameters;
@@ -45,24 +45,24 @@ class PluginsManager {
 	
 	void load(Configuration conf) throws IOException {
 		load();
-		log.info("Available data base dumpers:");
-		final Map<String, DBDumper> dumpers = JDbBackup.getDBDumpers().getLoaded();
-		dumpers.values().forEach(dd -> log.info("  . {} -> {}", dd.getScheme(), dd.getClass().getName()));
+		log.info("Available source managers:");
+		final Map<String, SourceManager> srcManager = JDbBackup.getSourceManagers().getLoaded();
+		srcManager.values().forEach(dd -> log.info("  . {} -> {}", dd.getScheme(), dd.getClass().getName()));
 		log.info("Available destination managers:");
 		@SuppressWarnings("rawtypes")
 		final Map<String, DestinationManager> managers = JDbBackup.getDestinationManagers().getLoaded();
 		managers.values().forEach(dm -> log.info("  . {} -> {}", dm.getScheme(), dm.getClass().getName()));
 		
-		final Set<String> missingDumpers = conf.getTasks().stream().map(Parameters.Task::getSource).map(this::getScheme).filter(s -> !dumpers.containsKey(s)).collect(Collectors.toSet());
-		final Set<String> missingManagers = conf.getTasks().stream().flatMap(task -> task.getDestinations().stream()).map(this::getScheme).filter(s -> !managers.containsKey(s)).collect(Collectors.toSet());
-		if (!missingDumpers.isEmpty()) {
-			log.info("Data base dumpers to search on registry: {}",missingDumpers);
+		final Set<String> missingSrcMngr = conf.getTasks().stream().map(Parameters.Task::getSource).map(this::getScheme).filter(s -> !srcManager.containsKey(s)).collect(Collectors.toSet());
+		final Set<String> missingDestMngr = conf.getTasks().stream().flatMap(task -> task.getDestinations().stream()).map(this::getScheme).filter(s -> !managers.containsKey(s)).collect(Collectors.toSet());
+		if (!missingSrcMngr.isEmpty()) {
+			log.info("Source managers to search on registry: {}",missingSrcMngr);
 		}
-		if (!missingManagers.isEmpty()) {
-			log.info("Destination managers to search on registry: {}",missingManagers);
+		if (!missingDestMngr.isEmpty()) {
+			log.info("Destination managers to search on registry: {}",missingDestMngr);
 		}
-		if (!missingDumpers.isEmpty() || !missingManagers.isEmpty()) {
-			new PluginsDownloader(conf.getProxy(), version).load(missingDumpers, missingManagers);
+		if (!missingSrcMngr.isEmpty() || !missingDestMngr.isEmpty()) {
+			new PluginsDownloader(conf.getProxy(), version).load(missingSrcMngr, missingDestMngr);
 		}
 	}
 
