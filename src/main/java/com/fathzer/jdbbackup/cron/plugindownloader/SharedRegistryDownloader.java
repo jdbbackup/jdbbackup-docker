@@ -53,7 +53,7 @@ abstract class SharedRegistryDownloader extends AbstractPluginsDownloader {
 	protected abstract Map<String, URI> getURIMap(final Registry registry);
 
 	@Override
-	protected void customize(HttpRequest.Builder requestBuilder) {
+	protected void customizeRegistryRequest(HttpRequest.Builder requestBuilder) {
 		requestBuilder.header("Accept","application/json");
 	}
 }

@@ -64,7 +64,7 @@ public class PluginsDownloader {
 		if (CLEAR_DOWNLOAD_DIR) {
 			clean();
 		}
-		this.srcManagerDownloader.load(missingSourceManagers);
-		this.destManagerDownloader.load(missingDestManagers);
+		this.srcManagerDownloader.load(missingSourceManagers.toArray(String[]::new));
+		this.destManagerDownloader.load(missingDestManagers.toArray(String[]::new));
 	}
 }
