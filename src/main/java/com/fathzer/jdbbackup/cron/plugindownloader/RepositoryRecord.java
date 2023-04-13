@@ -6,12 +6,12 @@ import java.util.Map;
 import lombok.Getter;
 
 @Getter
-class RegistryRecord {
+class RepositoryRecord {
 	@Getter
-	static class Registry {
+	static class Repository {
 		private Map<String, URI> destinationManagers;
 		private Map<String, URI> sourceManagers;
 	}
 	
-	private Registry registry;
+	private Repository repository;
 }

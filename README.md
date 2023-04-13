@@ -39,21 +39,21 @@ You can easily pass a local file to the image using the --volume docker option:
 To add your own plugins, define the **pluginsDirectory** environment variable and use --volume docker option to mount a host directory at the path defined in **pluginsDirectory**.  
 Example: ```-e "pluginsDirectory=/plugins" --volume /home/account/path/plugins``̀`
 
-### Plugin registry
-This image only contains MySQL database source manager and file destination manager. If another source/destination is referenced in the configuration file, without being added through the **pluginsDirectory**, the container automatically search it in an Internet plugin registry.  
+### Plugin repository
+This image only contains MySQL database source manager and file destination manager. If another source/destination is referenced in the configuration file, without being added through the **pluginsDirectory**, the container automatically search it in an Internet plugin repository.  
 
 If you want to delete all already downloaded plugins and reload useful ones at container startup, set the **clearDownloadedPlugins** system property to true.
 
-### Alternate plugin registry
-By default, the image uses the plugin registry whose root URI is https://jdbbackup.github.io/web/registry/.  
-The full URL is completed with the image version, for instance [https://jdbbackup.github.io/web/registry/1.0.0](https://jdbbackup.github.io/web/registry/1.0.0).
+### Alternate plugin repository
+By default, the image uses the plugin repository whose root URI is https://jdbbackup.github.io/web/repository/.  
+The full URL is completed with the image version, for instance [https://jdbbackup.github.io/web/repository/1.0.0](https://jdbbackup.github.io/web/repository/1.0.0).
 
-If you want to use your own registry, put its root URI in **pluginRegistry** system property.  
-Your registry should return a json file like the following at the address *root*/*version*.
+If you want to use your own repository, put its root URI in **pluginRepository** system property.  
+Your repository should return a json file like the following at the address *root*/*version*.
 
 ```
 {
-	"registry": {
+	"repository": {
 		"destinationManagers":{
 			"sftp":"https://myOwnRepo.com/artifacts/jdbbackup-sftp-1.0.0.jar",
 			"s3":"https://myOwnRepo.com/artifacts/jdbbackup-s3-1.0.0.jar",

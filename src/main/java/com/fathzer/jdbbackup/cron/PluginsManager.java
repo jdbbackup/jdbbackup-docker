@@ -2,21 +2,23 @@ package com.fathzer.jdbbackup.cron;
 
 import static com.fathzer.jdbbackup.DestinationManager.URI_PATH_SEPARATOR;
 
-import java.io.File;
 import java.io.IOException;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.util.Arrays;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.fathzer.jdbbackup.SourceManager;
 import com.fathzer.jdbbackup.DestinationManager;
 import com.fathzer.jdbbackup.JDbBackup;
 import com.fathzer.jdbbackup.cron.parameters.Parameters;
 import com.fathzer.jdbbackup.cron.plugindownloader.PluginsDownloader;
-import com.fathzer.jdbbackup.utils.Files;
+import com.fathzer.plugin.loader.jar.JarPluginLoader;
+import com.fathzer.plugin.loader.utils.FileUtils;
+import com.fathzer.plugin.loader.utils.PluginRegistry;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -29,41 +31,58 @@ class PluginsManager {
 		this.version = version;
 	}
 
-	private void load() throws IOException {
+	private void load(JDbBackup backup) throws IOException {
+		//TODO Verify it works, seems jar are not directly uder pluginsDirectory
 		final String dir = System.getenv("pluginsDirectory");
 		if (dir != null) {
-			final File file = new File(dir);
-			final URL[] urls = Files.getJarURL(file, 1);
-			if (urls.length > 0) {
-				log.info("Loading plugins in {}", Arrays.asList(urls));
-				JDbBackup.loadPlugins(URLClassLoader.newInstance(urls));
+			final Path file = Paths.get(dir);
+			final List<Path> files = FileUtils.getJarFiles(file, 1);
+			if (!files.isEmpty()) {
+				log.info("Loading plugins in {}", files);
+				load(backup, files);
 			} else {
 				log.info("No external plugins in {}", file);
 			}
 		}
 	}
 	
-	void load(Configuration conf) throws IOException {
-		load();
-		log.info("Available source managers:");
-		final Map<String, SourceManager> srcManager = JDbBackup.getSourceManagers().getLoaded();
-		srcManager.values().forEach(dd -> log.info("  . {} -> {}", dd.getScheme(), dd.getClass().getName()));
-		log.info("Available destination managers:");
-		@SuppressWarnings("rawtypes")
-		final Map<String, DestinationManager> managers = JDbBackup.getDestinationManagers().getLoaded();
-		managers.values().forEach(dm -> log.info("  . {} -> {}", dm.getScheme(), dm.getClass().getName()));
-		
-		final Set<String> missingSrcMngr = conf.getTasks().stream().map(Parameters.Task::getSource).map(this::getScheme).filter(s -> !srcManager.containsKey(s)).collect(Collectors.toSet());
-		final Set<String> missingDestMngr = conf.getTasks().stream().flatMap(task -> task.getDestinations().stream()).map(this::getScheme).filter(s -> !managers.containsKey(s)).collect(Collectors.toSet());
-		if (!missingSrcMngr.isEmpty()) {
-			log.info("Source managers to search on registry: {}",missingSrcMngr);
+	private void load(JDbBackup backup, List<Path> files) {
+		final JarPluginLoader loader = new JarPluginLoader();
+		for (Path file:files) {
+			try {
+				backup.getSourceManagers().registerAll(loader.getPlugins(file, SourceManager.class));
+				backup.getDestinationManagers().registerAll(loader.getPlugins(file, DestinationManager.class));
+			} catch (IOException e) {
+				log.error("Error while loading plugins in "+file,e);
+			}
 		}
-		if (!missingDestMngr.isEmpty()) {
-			log.info("Destination managers to search on registry: {}",missingDestMngr);
-		}
+	}
+	
+	void load(JDbBackup backup, Configuration conf) throws IOException {
+		load(backup);
+		final Set<String> missingSrcMngr = getMissing(backup.getSourceManagers(), conf.getTasks().stream().map(Parameters.Task::getSource).map(this::getScheme), "source managers");
+		final Set<String> missingDestMngr = getMissing(backup.getDestinationManagers(), conf.getTasks().stream().flatMap(task -> task.getDestinations().stream()).map(this::getScheme), "destination managers");
 		if (!missingSrcMngr.isEmpty() || !missingDestMngr.isEmpty()) {
 			new PluginsDownloader(conf.getProxy(), version).load(missingSrcMngr, missingDestMngr);
 		}
+	}
+	
+	<T> Set<String> getMissing(PluginRegistry<T> registry, Stream<String> requiredKeys, String wording) {
+		log.info("Installed {}:", wording);
+		final Map<String, T> srcManager = registry.getRegistered();
+		srcManager.values().forEach(dd -> log.info("  . {} -> {}", registry.getKeyFunction(), dd.getClass().getName()));
+		final Set<String> missing = requiredKeys.filter(s -> !srcManager.containsKey(s)).collect(Collectors.toSet());
+		if (!missing.isEmpty()) {
+			log.info("{} to search in repository: {}", capitalize(wording), missing);
+		}
+		return missing;
+	}
+	
+	static String capitalize(String str) {
+	    if (str == null || str.length()<=1) {
+	    	return str;
+	    }
+	    return str.substring(0, 1).toUpperCase() + str.substring(1);
 	}
 
 	private String getScheme(String address) {

@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import com.fathzer.jdbbackup.JDbBackup;
 import com.fathzer.jdbbackup.cron.parameters.Parameters.Task;
 
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +21,12 @@ public class Main {
 	private static final int ERROR = 1;
 	private static final int WRONG_ARG = 2;
 	
+	private JDbBackup backupEngine;
+	
+	public Main(JDbBackup jDbBackup) {
+		this.backupEngine = jDbBackup;
+	}
+
 	/** The main method.
 	 * @param args Program arguments
 	 */
@@ -31,7 +38,7 @@ public class Main {
 			exitCode = WRONG_ARG;
 		} else {
 			try {
-				new Main().doIt(args);
+				new Main(new JDbBackup()).doIt(args);
 			} catch (IllegalArgumentException e) {
 				log.error(e.getMessage(), e);
 				exitCode = ERROR;
@@ -47,7 +54,7 @@ public class Main {
 	
 	private void doIt(String... args) throws IOException {
 		final Configuration conf = getConfiguration(args.length==1?args[0]:null);
-		new PluginsManager(getVersion()).load(conf);
+		new PluginsManager(getVersion()).load(backupEngine, conf);
 		conf.getTasks().forEach(this::check);
 		conf.schedule();
 	}
