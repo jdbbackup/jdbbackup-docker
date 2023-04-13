@@ -7,6 +7,7 @@ import java.net.URI;
 import java.net.http.HttpRequest.Builder;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -16,7 +17,7 @@ import com.fathzer.jdbbackup.utils.Cache;
 
 import lombok.Setter;
 
-abstract class SharedRepositoryDownloader extends AbstractManagersDownloader {
+public class SharedRepositoryDownloader extends AbstractManagersDownloader {
 	private static class RepositoryDecoder implements Supplier<Repository> {
 		@Setter
 		private InputStream in;
@@ -31,11 +32,13 @@ abstract class SharedRepositoryDownloader extends AbstractManagersDownloader {
 	}
 	
 	private static final RepositoryDecoder decoder = new RepositoryDecoder();
-	private Cache<Repository> cache;
+	private final Cache<Repository> cache;
+	private final Function<Repository, Map<String,URI>> repoToUriMap;
 
-	protected SharedRepositoryDownloader(URI uri, Path localDirectory, Cache<Repository> cache) {
+	public SharedRepositoryDownloader(URI uri, Path localDirectory, Cache<Repository> cache, Function<Repository, Map<String,URI>> repoToUriMap) {
 		super(uri, localDirectory);
 		this.cache = cache;
+		this.repoToUriMap = repoToUriMap;
 	}
 
 	@Override
@@ -43,13 +46,11 @@ abstract class SharedRepositoryDownloader extends AbstractManagersDownloader {
 		try {
 			decoder.setIn(in);
 			final Repository registry = cache.get(decoder);
-			return getURIMap(registry);
+			return repoToUriMap.apply(registry);
 		} catch (UncheckedIOException e) {
 			throw e;
 		}
 	}
-
-	protected abstract Map<String, URI> getURIMap(final Repository registry);
 
 	@Override
 	protected Builder getRepositoryRequestBuilder() {

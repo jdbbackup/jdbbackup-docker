@@ -6,9 +6,9 @@ import java.util.Map;
 import lombok.Getter;
 
 @Getter
-class RepositoryRecord {
+public class RepositoryRecord {
 	@Getter
-	static class Repository {
+	public static class Repository {
 		private Map<String, URI> destinationManagers;
 		private Map<String, URI> sourceManagers;
 	}

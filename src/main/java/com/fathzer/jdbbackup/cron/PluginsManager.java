@@ -3,8 +3,10 @@ package com.fathzer.jdbbackup.cron;
 import static com.fathzer.jdbbackup.DestinationManager.URI_PATH_SEPARATOR;
 
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -15,7 +17,9 @@ import com.fathzer.jdbbackup.SourceManager;
 import com.fathzer.jdbbackup.DestinationManager;
 import com.fathzer.jdbbackup.JDbBackup;
 import com.fathzer.jdbbackup.cron.parameters.Parameters;
-import com.fathzer.jdbbackup.cron.plugindownloader.PluginsDownloader;
+import com.fathzer.jdbbackup.cron.plugindownloader.SharedRepositoryDownloader;
+import com.fathzer.jdbbackup.cron.plugindownloader.RepositoryRecord.Repository;
+import com.fathzer.jdbbackup.utils.Cache;
 import com.fathzer.plugin.loader.jar.JarPluginLoader;
 import com.fathzer.plugin.loader.utils.FileUtils;
 import com.fathzer.plugin.loader.utils.PluginRegistry;
@@ -24,15 +28,33 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 class PluginsManager {
-	private String version;
+	/** The root URI of remote plugin repository. */
+	private static final URI REPOSITORY_ROOT_URI = URI.create(System.getProperty("pluginRepository", "https://jdbbackup.github.io/web/repository/"));
+	/** The directory where downloaded plugins are stored. */
+	public static final Path DOWNLOAD_DIR = Paths.get(System.getProperty("downloadedPlugins", System.getProperty("user.home", "")));
+	private static final boolean CLEAR_DOWNLOAD_DIR = Boolean.getBoolean("clearDownloadedPlugins");
 
+	private SharedRepositoryDownloader destManagerDownloader;
+	private SharedRepositoryDownloader srcManagerDownloader;
+
+	/** Constructor.
+	 * @param version The version of plugins client.
+	 */
 	PluginsManager(String version) {
 		super();
-		this.version = version;
+		final URI uri = REPOSITORY_ROOT_URI.resolve(version+".json");
+		final Cache<Repository> cache = new Cache<>(); 
+		this.destManagerDownloader = new SharedRepositoryDownloader(uri, DOWNLOAD_DIR.resolve("destinations"), cache, Repository::getDestinationManagers);
+		this.destManagerDownloader.setPluginTypeWording("destination manager");
+		this.srcManagerDownloader = new SharedRepositoryDownloader(uri, DOWNLOAD_DIR.resolve("sources"), cache, Repository::getSourceManagers);
+		this.srcManagerDownloader.setPluginTypeWording("source manager");
 	}
 
 	private void load(JDbBackup backup) throws IOException {
-		//TODO Verify it works, seems jar are not directly uder pluginsDirectory
+		if (CLEAR_DOWNLOAD_DIR) {
+			destManagerDownloader.clean();
+			srcManagerDownloader.clean();
+		}
 		final String dir = System.getenv("pluginsDirectory");
 		if (dir != null) {
 			final Path file = Paths.get(dir);
@@ -41,7 +63,7 @@ class PluginsManager {
 				log.info("Loading plugins in {}", files);
 				load(backup, files);
 			} else {
-				log.info("No external plugins in {}", file);
+				log.info("Found no plugin in {}", file);
 			}
 		}
 	}
@@ -61,17 +83,19 @@ class PluginsManager {
 	void load(JDbBackup backup, Configuration conf) throws IOException {
 		load(backup);
 		final Set<String> missingSrcMngr = getMissing(backup.getSourceManagers(), conf.getTasks().stream().map(Parameters.Task::getSource).map(this::getScheme), "source managers");
+		this.srcManagerDownloader.setProxy(conf.getProxy());
+		Collection<Path> files = this.srcManagerDownloader.download(missingSrcMngr.toArray(String[]::new));
+
 		final Set<String> missingDestMngr = getMissing(backup.getDestinationManagers(), conf.getTasks().stream().flatMap(task -> task.getDestinations().stream()).map(this::getScheme), "destination managers");
-		if (!missingSrcMngr.isEmpty() || !missingDestMngr.isEmpty()) {
-			new PluginsDownloader(conf.getProxy(), version).load(missingSrcMngr, missingDestMngr);
-		}
+		this.destManagerDownloader.setProxy(conf.getProxy());
+		files = this.destManagerDownloader.download(missingDestMngr.toArray(String[]::new));
 	}
 	
 	<T> Set<String> getMissing(PluginRegistry<T> registry, Stream<String> requiredKeys, String wording) {
-		log.info("Installed {}:", wording);
-		final Map<String, T> srcManager = registry.getRegistered();
-		srcManager.values().forEach(dd -> log.info("  . {} -> {}", registry.getKeyFunction(), dd.getClass().getName()));
-		final Set<String> missing = requiredKeys.filter(s -> !srcManager.containsKey(s)).collect(Collectors.toSet());
+		final Map<String, T> managers = registry.getRegistered();
+		log.info(managers.isEmpty()?"No {} installed":"Installed {}:", wording);
+		managers.values().forEach(dd -> log.info("  . {} -> {}", registry.getKeyFunction().apply(dd), dd.getClass().getName()));
+		final Set<String> missing = requiredKeys.filter(s -> !managers.containsKey(s)).collect(Collectors.toSet());
 		if (!missing.isEmpty()) {
 			log.info("{} to search in repository: {}", capitalize(wording), missing);
 		}
