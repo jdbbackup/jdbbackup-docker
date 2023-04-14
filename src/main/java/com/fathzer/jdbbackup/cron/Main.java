@@ -56,7 +56,7 @@ public class Main {
 		final Configuration conf = getConfiguration(args.length==1?args[0]:null);
 		new PluginsManager(getVersion()).load(backupEngine, conf);
 		conf.getTasks().forEach(this::check);
-		conf.schedule();
+		conf.schedule(backupEngine);
 	}
 	
 	private void check(Task task) {

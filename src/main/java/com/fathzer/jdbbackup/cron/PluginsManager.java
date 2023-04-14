@@ -19,10 +19,12 @@ import com.fathzer.jdbbackup.JDbBackup;
 import com.fathzer.jdbbackup.cron.parameters.Parameters;
 import com.fathzer.jdbbackup.cron.plugindownloader.SharedRepositoryDownloader;
 import com.fathzer.jdbbackup.cron.plugindownloader.RepositoryRecord.Repository;
+import com.fathzer.jdbbackup.utils.AbstractManagersDownloader;
 import com.fathzer.jdbbackup.utils.Cache;
 import com.fathzer.plugin.loader.jar.JarPluginLoader;
 import com.fathzer.plugin.loader.utils.FileUtils;
 import com.fathzer.plugin.loader.utils.PluginRegistry;
+import com.fathzer.plugin.loader.utils.ProxySettings;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -31,7 +33,7 @@ class PluginsManager {
 	/** The root URI of remote plugin repository. */
 	private static final URI REPOSITORY_ROOT_URI = URI.create(System.getProperty("pluginRepository", "https://jdbbackup.github.io/web/repository/"));
 	/** The directory where downloaded plugins are stored. */
-	public static final Path DOWNLOAD_DIR = Paths.get(System.getProperty("downloadedPlugins", System.getProperty("user.home", "")));
+	public static final Path DOWNLOAD_DIR = Paths.get(System.getProperty("downloadedPlugins", System.getProperty("user.home", "")),".jdbbackup");
 	private static final boolean CLEAR_DOWNLOAD_DIR = Boolean.getBoolean("clearDownloadedPlugins");
 
 	private SharedRepositoryDownloader destManagerDownloader;
@@ -51,10 +53,6 @@ class PluginsManager {
 	}
 
 	private void load(JDbBackup backup) throws IOException {
-		if (CLEAR_DOWNLOAD_DIR) {
-			destManagerDownloader.clean();
-			srcManagerDownloader.clean();
-		}
 		final String dir = System.getenv("pluginsDirectory");
 		if (dir != null) {
 			final Path file = Paths.get(dir);
@@ -82,13 +80,31 @@ class PluginsManager {
 	
 	void load(JDbBackup backup, Configuration conf) throws IOException {
 		load(backup);
-		final Set<String> missingSrcMngr = getMissing(backup.getSourceManagers(), conf.getTasks().stream().map(Parameters.Task::getSource).map(this::getScheme), "source managers");
-		this.srcManagerDownloader.setProxy(conf.getProxy());
-		Collection<Path> files = this.srcManagerDownloader.download(missingSrcMngr.toArray(String[]::new));
-
-		final Set<String> missingDestMngr = getMissing(backup.getDestinationManagers(), conf.getTasks().stream().flatMap(task -> task.getDestinations().stream()).map(this::getScheme), "destination managers");
-		this.destManagerDownloader.setProxy(conf.getProxy());
-		files = this.destManagerDownloader.download(missingDestMngr.toArray(String[]::new));
+		load(backup.getSourceManagers(), SourceManager.class, conf.getTasks().stream().map(Parameters.Task::getSource).map(this::getScheme),
+				"source managers", this.srcManagerDownloader, conf.getProxy());
+		load(backup.getDestinationManagers(), DestinationManager.class, conf.getTasks().stream().flatMap(task -> task.getDestinations().stream()).map(this::getScheme),
+				"destination managers", this.destManagerDownloader, conf.getProxy());
+	}
+	
+	private <T> void load(PluginRegistry<T> registry, Class<T> pluginClass, Stream<String> requiredKeys, String wording, AbstractManagersDownloader downloader, ProxySettings proxy) throws IOException {
+		if (CLEAR_DOWNLOAD_DIR) {
+			downloader.clean();
+		}
+		final Set<String> missing = getMissing(registry, requiredKeys, wording);
+		downloader.setProxy(proxy);
+		final Collection<Path> files = downloader.download(missing.toArray(String[]::new));
+		for (Path file: files) {
+			final JarPluginLoader loader = new JarPluginLoader();
+			final List<T> plugins = loader.getPlugins(file, pluginClass);
+			if (plugins.isEmpty()) {
+				log.warn("Found no {} in file {}",wording, file);
+			}
+			List<T> added = registry.registerAll(plugins);
+			if (!added.isEmpty()) {
+				log.info("{} loaded from file {}",capitalize(wording), file);
+				added.forEach(dd -> log.info("  . {} -> {}", registry.getKeyFunction().apply(dd), dd.getClass().getName()));
+			}
+		}
 	}
 	
 	<T> Set<String> getMissing(PluginRegistry<T> registry, Stream<String> requiredKeys, String wording) {

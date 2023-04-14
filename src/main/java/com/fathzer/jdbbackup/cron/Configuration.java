@@ -61,12 +61,12 @@ class Configuration {
 		}
 	}
 	
-	void schedule() {
+	void schedule(JDbBackup backupEngine) {
 		for (final Parameters.Task task : tasks) {
 			final Scheduler scheduler = new Scheduler();
 			final Runnable scheduledTask = () -> {
 				try {
-					new JDbBackup().backup(proxy, task.getSource(), task.getDestinations().toArray(String[]::new));
+					backupEngine.backup(proxy, task.getSource(), task.getDestinations().toArray(String[]::new));
 					log.info("{} task succeeded", task.getName());
 				} catch (Throwable e) {
 					log.error(task.getName()+" task failed", e);
