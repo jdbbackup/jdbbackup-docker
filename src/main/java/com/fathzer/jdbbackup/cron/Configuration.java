@@ -62,11 +62,14 @@ class Configuration {
 	}
 	
 	void schedule(JDbBackup backupEngine) {
+		if (proxy!=null) {
+			backupEngine.setProxy(proxy.toProxy(), proxy.getLogin());
+		}
 		for (final Parameters.Task task : tasks) {
 			final Scheduler scheduler = new Scheduler();
 			final Runnable scheduledTask = () -> {
 				try {
-					backupEngine.backup(proxy, task.getSource(), task.getDestinations().toArray(String[]::new));
+					backupEngine.backup(task.getSource(), task.getDestinations().toArray(String[]::new));
 					log.info("{} task succeeded", task.getName());
 				} catch (Throwable e) {
 					log.error(task.getName()+" task failed", e);

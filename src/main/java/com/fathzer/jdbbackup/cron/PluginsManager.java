@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -23,7 +24,6 @@ import com.fathzer.jdbbackup.utils.AbstractManagersDownloader;
 import com.fathzer.jdbbackup.utils.Cache;
 import com.fathzer.plugin.loader.jar.JarPluginLoader;
 import com.fathzer.plugin.loader.utils.FileUtils;
-import com.fathzer.plugin.loader.utils.PluginRegistry;
 import com.fathzer.plugin.loader.utils.ProxySettings;
 
 import lombok.extern.slf4j.Slf4j;
@@ -70,8 +70,8 @@ class PluginsManager {
 		final JarPluginLoader loader = new JarPluginLoader();
 		for (Path file:files) {
 			try {
-				backup.getSourceManagers().registerAll(loader.getPlugins(file, SourceManager.class));
-				backup.getDestinationManagers().registerAll(loader.getPlugins(file, DestinationManager.class));
+				loader.getPlugins(file, SourceManager.class).forEach(s -> backup.getSourceManagers().put(s.getScheme(), s));
+				loader.getPlugins(file, DestinationManager.class).forEach(d -> backup.getDestinationManagers().put(d.getScheme(), d));
 			} catch (IOException e) {
 				log.error("Error while loading plugins in "+file,e);
 			}
@@ -80,13 +80,13 @@ class PluginsManager {
 	
 	void load(JDbBackup backup, Configuration conf) throws IOException {
 		load(backup);
-		load(backup.getSourceManagers(), SourceManager.class, conf.getTasks().stream().map(Parameters.Task::getSource).map(this::getScheme),
+		load(backup.getSourceManagers(), SourceManager::getScheme, SourceManager.class, conf.getTasks().stream().map(Parameters.Task::getSource).map(this::getScheme),
 				"source managers", this.srcManagerDownloader, conf.getProxy());
-		load(backup.getDestinationManagers(), DestinationManager.class, conf.getTasks().stream().flatMap(task -> task.getDestinations().stream()).map(this::getScheme),
+		load(backup.getDestinationManagers(), DestinationManager::getScheme, DestinationManager.class, conf.getTasks().stream().flatMap(task -> task.getDestinations().stream()).map(this::getScheme),
 				"destination managers", this.destManagerDownloader, conf.getProxy());
 	}
 	
-	private <T> void load(PluginRegistry<T> registry, Class<T> pluginClass, Stream<String> requiredKeys, String wording, AbstractManagersDownloader downloader, ProxySettings proxy) throws IOException {
+	private <T> void load(Map<String, T> registry, Function<T,String> keyFunction, Class<T> pluginClass, Stream<String> requiredKeys, String wording, AbstractManagersDownloader downloader, ProxySettings proxy) throws IOException {
 		if (CLEAR_DOWNLOAD_DIR) {
 			downloader.clean();
 		}
@@ -98,19 +98,24 @@ class PluginsManager {
 			final List<T> plugins = loader.getPlugins(file, pluginClass);
 			if (plugins.isEmpty()) {
 				log.warn("Found no {} in file {}",wording, file);
-			}
-			List<T> added = registry.registerAll(plugins);
-			if (!added.isEmpty()) {
-				log.info("{} loaded from file {}",capitalize(wording), file);
-				added.forEach(dd -> log.info("  . {} -> {}", registry.getKeyFunction().apply(dd), dd.getClass().getName()));
+			} else {
+				register(registry, keyFunction, plugins, file, wording);
 			}
 		}
 	}
+
+	private <T> void register(Map<String, T> registry, Function<T,String> keyFunction, final List<T> plugins, Path file, String wording) {
+		final List<T> added = plugins.stream().filter(p -> !registry.containsKey(keyFunction.apply(p))).collect(Collectors.toList());
+		added.forEach(p -> registry.put(keyFunction.apply(p), p));
+		if (!added.isEmpty()) {
+			log.info("{} loaded from file {}",capitalize(wording), file);
+			added.forEach(dd -> log.info("  . {} -> {}", keyFunction.apply(dd), dd.getClass().getName()));
+		}
+	}
 	
-	<T> Set<String> getMissing(PluginRegistry<T> registry, Stream<String> requiredKeys, String wording) {
-		final Map<String, T> managers = registry.getRegistered();
+	<T> Set<String> getMissing(Map<String, T> managers, Stream<String> requiredKeys, String wording) {
 		log.info(managers.isEmpty()?"No {} installed":"Installed {}:", wording);
-		managers.values().forEach(dd -> log.info("  . {} -> {}", registry.getKeyFunction().apply(dd), dd.getClass().getName()));
+		managers.entrySet().forEach(e -> log.info("  . {} -> {}", e.getKey(), e.getValue().getClass().getName()));
 		final Set<String> missing = requiredKeys.filter(s -> !managers.containsKey(s)).collect(Collectors.toSet());
 		if (!missing.isEmpty()) {
 			log.info("{} to search in repository: {}", capitalize(wording), missing);
