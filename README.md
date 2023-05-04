@@ -23,8 +23,8 @@ In order to use the MySQL source, *mysqldump* command must be installed on the m
 By default, the path of the [configuration file](#configuration-file) is */tasks.json*. You can define the *TASKS_PATH* environment variable to use another file
 
 You can also easily pass a local file to the image using the --volume docker option: 
-
 ```--volume /home/account/path/backupTasks.json:/tasks.json```
+
 
 ### Configuration file
 You should provide a json configuration file with the following format
