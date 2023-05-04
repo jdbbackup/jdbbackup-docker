@@ -58,7 +58,7 @@ Please have a look at [jdbbackup-core project](https://github.com/jdbbackup/jdbb
 
 ## Adding plugins
 To add your own plugins, define the **pluginsDirectory** environment variable and use *--volume* docker option to mount a host directory at the path defined in **pluginsDirectory**.  
-Example: ```-e "pluginsDirectory=/plugins" --volume /home/account/path/plugins:/plugins``̀` `
+Example: ```-e "pluginsDirectory=/plugins" --volume /home/account/path/plugins:/plugins```
 
 ### Plugin repository
 This image only contains MySQL database source manager and file destination manager. If another source/destination is referenced in the configuration file, without being added through the **pluginsDirectory**, the container will automatically search it in an Internet plugin repository.  
