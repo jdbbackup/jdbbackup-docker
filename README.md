@@ -1,7 +1,23 @@
+![Maven Central](https://img.shields.io/maven-central/v/com.fathzer/jdbbackup-docker)
+![License](https://img.shields.io/badge/license-Apache%202.0-brightgreen.svg)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=jdbbackup_jdbbackup-docker&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=jdbbackup_jdbbackup-docker)
+[![javadoc](https://javadoc.io/badge2/com.fathzer/jdbbackup-docker/javadoc.svg)](https://javadoc.io/doc/com.fathzer/jdbbackup-docker)
+
 # jdbbackup-docker
-A ready to use docker container that schedules and executes the backup of a data sources.
+A ready to use docker container, based on [jdbbackup-core](https://github.com/jdbbackup/jdbbackup-core), that schedules and executes the backup of a data sources.
 
 ## How to use it
+
+### Without Docker
+This application requires Java11+.
+
+The [artifact deployed in Maven central](https://repo1.maven.org/maven2/com/fathzer/jdbbackup-docker/1.0.0/jdbbackup-docker-1.0.0.jar) is a runnable jar.  
+Launch it with ```java -jar jdbbackup-docker-1.0.0.jar config.json``` where *config.json* is the configuration file ([see below](#configuration-file)) or set the environment variable *TASKS_PATH* to the path of the configuration file and launch it with ```java -jar jdbbackup-docker-1.0.0.jar```. You may also leave *TASKS_PATH* unset, its default value is *task.json*.
+
+### With Docker
+**TODO**
+
+### Configuration file
 You should provide a json configuration file with the following format
 
 ```

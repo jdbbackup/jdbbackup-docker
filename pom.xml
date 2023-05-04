@@ -26,6 +26,12 @@
 			<artifactId>jdbbackup-core</artifactId>
 			<version>1.0.0</version>
 		</dependency>
+		<!-- TODO Overrides the plugin loader library defined in core -->
+		<dependency>
+			<groupId>com.fathzer</groupId>
+			<artifactId>plugin-loader</artifactId>
+			<version>0.0.3</version>
+		</dependency>
 		<dependency>
 			<groupId>it.sauronsoftware.cron4j</groupId>
 			<artifactId>cron4j</artifactId>
@@ -105,6 +111,9 @@
 								</transformer>
 								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
 									<resource>META-INF/services/com.fathzer.jdbbackup.SourceManager</resource>
+								</transformer>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+									<mainClass>com.fathzer.jdbbackup.cron.Main</mainClass>
 								</transformer>
 							</transformers>
 						</configuration>

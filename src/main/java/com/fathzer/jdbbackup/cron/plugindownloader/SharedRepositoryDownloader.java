@@ -48,7 +48,7 @@ public class SharedRepositoryDownloader extends AbstractManagersDownloader {
 			final Repository registry = cache.get(decoder);
 			return repoToUriMap.apply(registry);
 		} catch (UncheckedIOException e) {
-			throw e;
+			throw e.getCause();
 		}
 	}
 
