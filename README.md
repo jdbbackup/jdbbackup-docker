@@ -67,23 +67,24 @@ If you want to delete all already downloaded plugins and reload useful ones at c
 
 ### Alternate plugin repository
 By default, the image uses the plugin repository whose root URI is https://jdbbackup.github.io/web/repository/.  
-The full URL is completed with the image version, for instance [https://jdbbackup.github.io/web/repository/1.0.0](https://jdbbackup.github.io/web/repository/1.0.0).
+The full URL is completed with the image version, for instance [https://jdbbackup.github.io/web/repository/1.0.0.json](https://jdbbackup.github.io/web/repository/1.0.0).
 
 If you want to use your own repository, put its root URI in **pluginRepository** system property.  
 Your repository should return a json file like the following at the address *root*/*version*.
 
-````  "repository": {
-    "destinationManagers": [
-      "sftp":"https://myOwnRepo.com/artifacts/jdbbackup-sftp-1.0.0.jar",
-      "s3":"https://myOwnRepo.com/artifacts/jdbbackup-s3-1.0.0.jar",
-      "gcs":"https://myOwnRepo.com/artifacts/jdbbackup-gcs-1.0.0.jar",
-      "dropbox":"https://myOwnRepo.com/artifacts/jdbbackup-dropbox-1.0.0.jar"
-    ],
-    "sourceManagers": [
-      "fake":"https://www.astesana.net/jdbbackup/artifacts/jdbbackup-fakesource-1.0.0.jar"
-    ]
-  }
-````
+```
+"repository": {
+  "destinationManagers": [
+    "sftp":"https://myOwnRepo.com/artifacts/jdbbackup-sftp-1.0.0.jar",
+    "s3":"https://myOwnRepo.com/artifacts/jdbbackup-s3-1.0.0.jar",
+    "gcs":"https://myOwnRepo.com/artifacts/jdbbackup-gcs-1.0.0.jar",
+    "dropbox":"https://myOwnRepo.com/artifacts/jdbbackup-dropbox-1.0.0.jar"
+  ],
+  "sourceManagers": [
+    "fake":"https://www.astesana.net/jdbbackup/artifacts/jdbbackup-fakesource-1.0.0.jar"
+  ]
+}
+```
 Warning absolute URL are mandatory.
 
 ## Logging
