@@ -14,8 +14,17 @@ This application requires Java11+.
 The [artifact deployed in Maven central](https://repo1.maven.org/maven2/com/fathzer/jdbbackup-docker/1.0.0/jdbbackup-docker-1.0.0.jar) is a runnable jar.  
 Launch it with ```java -jar jdbbackup-docker-1.0.0.jar config.json``` where *config.json* is the configuration file ([see below](#configuration-file)) or set the environment variable *TASKS_PATH* to the path of the configuration file and launch it with ```java -jar jdbbackup-docker-1.0.0.jar```. You may also leave *TASKS_PATH* unset, its default value is *task.json*.
 
+If you want to include this application in a Java program, the main class is *com.fathzer.jdbbackup.cron.Main*.
+
+In order to use the MySQL source, *mysqldump* command must be installed on the machine taht runs this application.
+
 ### With Docker
 **TODO**
+By default, the path of the [configuration file](#configuration-file) is */tasks.json*. You can define the *TASKS_PATH* environment variable to use another file
+
+You can also easily pass a local file to the image using the --volume docker option: 
+
+```--volume /home/account/path/backupTasks.json:/tasks.json```
 
 ### Configuration file
 You should provide a json configuration file with the following format
@@ -31,25 +40,20 @@ You should provide a json configuration file with the following format
 }
 ```
 
-Only proxy is not mandatory. tasks and destinations should not be empty.
-
-The container is able to store the backup in various destinations kind (sftp server, s3, etc...) the format of addresses passed in *destinations* attribute depends on the destination kind. Please have a look below at the **Available destinations** to known where to find documentation.  
-More destinations can be added by developing your own plugin. Please have a look at the [jdbbackup-core project](https://github.com/jdbbackup/jdbbackup-core) to know how to do that.
-
-The only data source type included in this container is mySQL. You can add your own (Postgres for example) by developing a *SourceManager* plugin. Please have a look at the [jdbbackup-core project](https://github.com/jdbbackup/jdbbackup-core) to know how to do that.
-
-By default, the path of the file is */tasks.json*. You can define the *TASKS_PATH* environment variable to use another file.
-You can easily pass a local file to the image using the --volume docker option:  
-```--volume /home/account/path/backupTasks.json:/tasks.json```
-
-### Available sources
-- mysql: Dumps the whole content of a mySQL Database ([see jdbbackup-core](https://github.com/jdbbackup/jdbbackup-core))
-
-### Available destinations
-- file: Saves the backup to a local file to a local file ([see jdbbackup-core](https://github.com/jdbbackup/jdbbackup-core)).
-- sftp: Saves the backup to a sftp server [see jdbbackup-sftp](https://github.com/jdbbackup/jdbbackup-sftp).
-- s3: Saves the backup to an [Amazon S3](https://aws.amazon.com/s3/) bucket [see jdbbackup-s3](https://github.com/jdbbackup/jdbbackup-s3).
-- dropbox: Saves the backup to a [Dropbox](https://www.dropbox.com/) account [jdbbackup-dropbox](https://github.com/jdbbackup/jdbbackup-s3).
+JSon attributes:  
+- proxy: The proxy to used to connect to remote servers. This attribute is not mandatory. *pwd* and *user* are optional in this attribute.
+- tasks: The list of backup tasks. This attribute is mandatory and should not be empty.
+  - name: The task's name.
+  - schedule: The task's schedule. This attribute accepts [*cron-like* patterns](https://www.sauronsoftware.it/projects/cron4j/manual.php#p02) and the following values:
+    - @hourly: Every hour on the hour.
+    - @daily: Every day at midnight.
+    - @monthly: Every month the first day of the month at midnight.
+    - @yearly: Every year the first day of the year at midnight.
+  - source: The data source to backup.
+  - destinations: The destinations where to save the data. It can't be empty.e
+The container is able to store the backup in various destinations kind (sftp server, s3, etc...) the format of addresses passed in *destinations* attribute depends on the destination kind.  
+The only data source type included in this container is mySQL. You can add your own (Postgres for example) by developing a *SourceManager* plugin.  
+Please have at [jdbbackup-core project](https://github.com/jdbbackup/jdbbackup-core) to find documentation on existing source and destination managers, and to learn how to develop your own. 
 
 ## Adding plugins
 To add your own plugins, define the **pluginsDirectory** environment variable and use --volume docker option to mount a host directory at the path defined in **pluginsDirectory**.  
