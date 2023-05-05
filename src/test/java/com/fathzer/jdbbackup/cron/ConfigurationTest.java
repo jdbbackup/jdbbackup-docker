@@ -15,7 +15,7 @@ class ConfigurationTest {
 	@Test
 	void test() throws IOException {
 		String json = "{'proxy':'host:3128','tasks':[{'name':'name','schedule':'@daily','source':'fake://xxx','destinations':['file://backup']}]}".replace('\'', '"');
-		Configuration conf = new Configuration(new ByteArrayInputStream(json.getBytes()));
+		Configuration conf = Configuration.read(new ByteArrayInputStream(json.getBytes()));
 		assertNotNull(conf.getProxy());
 		assertNull(conf.getProxy().getBase64Login());
 		assertEquals("host",conf.getProxy().getHost());
@@ -28,7 +28,7 @@ class ConfigurationTest {
 		assertEquals("file://backup", task.getDestinations().get(0));
 
 		illegal("");
-//		illegal("{}");
+		illegal("{}");
 		
 		illegal("{'proxy':'wrong','tasks':[{'name':'name','schedule':'@daily','source':'fake:\\xxx','destinations':['file://backup']}]}");
 	}
@@ -36,7 +36,7 @@ class ConfigurationTest {
 	private InputStream illegal(String content) throws IOException {
 		content = content.replace('\'', '"');
 		try (InputStream stream=new ByteArrayInputStream(content.getBytes())) {
-			assertThrows(IllegalArgumentException.class, () -> new Configuration(stream));
+			assertThrows(IllegalArgumentException.class, () -> Configuration.read(stream));
 		}
 		return null;
 	}

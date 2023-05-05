@@ -70,7 +70,7 @@ public class Main {
 
 	private Configuration getConfiguration(String confFilePath) {
 		try {
-			return new Configuration(getTasksFile(confFilePath));
+			return Configuration.read(getTasksFile(confFilePath));
 		} catch (IOException | IllegalArgumentException e) {
 			log.error("Something is wrong with the parameters");
 			throw new IllegalArgumentException(e);

@@ -34,24 +34,27 @@ class Configuration {
 	private ProxySettings proxy;
 	private List<Task> tasks;
 	
-	Configuration(Path path) throws IOException {
+	Configuration(Parameters params) {
+		if (params.getTasks()==null || params.getTasks().isEmpty()) {
+			throw new IllegalArgumentException("Tasks can't be null or empty");
+		}
+		this.proxy = params.getProxy() == null ? null : ProxySettings.fromString(params.getProxy());
+		this.tasks = params.getTasks();
+	}
+	
+	static Configuration read(Path path) throws IOException {
 		log.info("Loading tasks file in {}", path);
 		try (InputStream in = Files.newInputStream(path)) {
-			init(MAPPER.readValue(in, Parameters.class));
+			return read(in);
 		}
 	}
 	
-	Configuration(InputStream in) throws IOException {
+	static Configuration read(InputStream in) throws IOException {
 		try {
-			init(MAPPER.readValue(in, Parameters.class));
+			return new Configuration(MAPPER.readValue(in, Parameters.class));
 		} catch (DatabindException e) {
 			throw new IllegalArgumentException(e);
 		}
-	}
-	
-	private void init(Parameters params) {
-		this.proxy = params.getProxy() == null ? null : ProxySettings.fromString(params.getProxy());
-		this.tasks = params.getTasks();
 	}
 	
 	void schedule(JDbBackup backupEngine) {
