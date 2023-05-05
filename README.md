@@ -48,7 +48,7 @@ JSon attributes:
     - @hourly: Every hour on the hour.
     - @daily: Every day at midnight.
     - @monthly: Every month the first day of the month at midnight.
-    - @yearly: Every year the first day of the year at midnight.
+    - @yearly or @annually: Every year the first day of the year at midnight.
   - source: The data source to backup.
   - destinations: The destinations where to save the data. It can't be empty.
   

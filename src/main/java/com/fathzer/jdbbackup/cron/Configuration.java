@@ -5,16 +5,17 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.databind.DatabindException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fathzer.jdbbackup.JDbBackup;
+import com.fathzer.jdbbackup.cron.json.TaskDeserializer;
 import com.fathzer.jdbbackup.cron.parameters.Parameters;
+import com.fathzer.jdbbackup.cron.parameters.Task;
 import com.fathzer.plugin.loader.utils.ProxySettings;
 
-import it.sauronsoftware.cron4j.InvalidPatternException;
 import it.sauronsoftware.cron4j.Scheduler;
-import it.sauronsoftware.cron4j.SchedulingPattern;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -22,50 +23,42 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Getter(value = AccessLevel.PACKAGE)
 class Configuration {
+	private static final ObjectMapper MAPPER = new ObjectMapper();
+	
+	static {
+		SimpleModule module = new SimpleModule();
+		module.addDeserializer(Task.class, new TaskDeserializer());
+		MAPPER.registerModule(module);
+	}
+	
 	private ProxySettings proxy;
-	private List<Parameters.Task> tasks;
+	private List<Task> tasks;
 	
 	Configuration(Path path) throws IOException {
 		log.info("Loading tasks file in {}", path);
-		final ObjectMapper mapper = new ObjectMapper();
 		try (InputStream in = Files.newInputStream(path)) {
-			init(mapper.readValue(in, Parameters.class));
+			init(MAPPER.readValue(in, Parameters.class));
+		}
+	}
+	
+	Configuration(InputStream in) throws IOException {
+		try {
+			init(MAPPER.readValue(in, Parameters.class));
+		} catch (DatabindException e) {
+			throw new IllegalArgumentException(e);
 		}
 	}
 	
 	private void init(Parameters params) {
 		this.proxy = params.getProxy() == null ? null : ProxySettings.fromString(params.getProxy());
-		// Verify scheduling patterns are correct and replace shortcuts
-		this.tasks = params.getTasks().stream().map(t -> new Parameters.Task(t.getName(), t.getSource(), t.getDestinations(), toCron4JSchedule(t.getSchedule()))).collect(Collectors.toList());
-	}
-	
-	private static String toCron4JSchedule(String schedule) {
-		if ("@yearly".equals(schedule) || "@annually".equals(schedule)) { //$NON-NLS-1$ //$NON-NLS-2$
-			return "0 0 1 1 *"; //$NON-NLS-1$
-		} else if ("@monthly".equals(schedule)) { //$NON-NLS-1$
-			return "0 0 1 * *"; //$NON-NLS-1$
-		} else if ("@weekly".equals(schedule)) { //$NON-NLS-1$
-			return "0 0 * * 0"; //$NON-NLS-1$
-		} else if ("@daily".equals(schedule) || "@midnight".equals(schedule)) { //$NON-NLS-1$ //$NON-NLS-2$
-			return "0 0 * * *"; //$NON-NLS-1$
-		} else if ("@hourly".equals(schedule)) { //$NON-NLS-1$
-			return "0 * * * *"; //$NON-NLS-1$
-		} else {
-			// Verify the pattern is ok
-			try {
-				new SchedulingPattern(schedule);
-			} catch (InvalidPatternException e) {
-				throw new IllegalArgumentException(e);
-			}
-			return schedule;
-		}
+		this.tasks = params.getTasks();
 	}
 	
 	void schedule(JDbBackup backupEngine) {
 		if (proxy!=null) {
 			backupEngine.setProxy(proxy.toProxy(), proxy.getLogin());
 		}
-		for (final Parameters.Task task : tasks) {
+		for (final Task task : tasks) {
 			final Scheduler scheduler = new Scheduler();
 			final Runnable scheduledTask = () -> {
 				try {
@@ -75,7 +68,7 @@ class Configuration {
 					log.error(task.getName()+" task failed", e);
 				}
 			};
-			scheduler.schedule(toCron4JSchedule(task.getSchedule()), scheduledTask);
+			scheduler.schedule(task.getSchedule(), scheduledTask);
 			scheduler.start();
 			log.info("{} is scheduled with {} schedule", task.getName(), task.getSchedule());
 		}

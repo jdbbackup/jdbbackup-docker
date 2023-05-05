@@ -17,8 +17,8 @@ import java.util.stream.Stream;
 import com.fathzer.jdbbackup.SourceManager;
 import com.fathzer.jdbbackup.DestinationManager;
 import com.fathzer.jdbbackup.JDbBackup;
-import com.fathzer.jdbbackup.cron.parameters.Parameters;
 import com.fathzer.jdbbackup.cron.plugindownloader.SharedRepositoryDownloader;
+import com.fathzer.jdbbackup.cron.parameters.Task;
 import com.fathzer.jdbbackup.cron.plugindownloader.RepositoryRecord.Repository;
 import com.fathzer.jdbbackup.utils.AbstractManagersDownloader;
 import com.fathzer.jdbbackup.utils.Cache;
@@ -80,7 +80,7 @@ class PluginsManager {
 	
 	void load(JDbBackup backup, Configuration conf) throws IOException {
 		load(backup);
-		load(backup.getSourceManagers(), SourceManager::getScheme, SourceManager.class, conf.getTasks().stream().map(Parameters.Task::getSource).map(this::getScheme),
+		load(backup.getSourceManagers(), SourceManager::getScheme, SourceManager.class, conf.getTasks().stream().map(Task::getSource).map(this::getScheme),
 				"source managers", this.srcManagerDownloader, conf.getProxy());
 		load(backup.getDestinationManagers(), DestinationManager::getScheme, DestinationManager.class, conf.getTasks().stream().flatMap(task -> task.getDestinations().stream()).map(this::getScheme),
 				"destination managers", this.destManagerDownloader, conf.getProxy());

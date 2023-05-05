@@ -9,7 +9,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import com.fathzer.jdbbackup.JDbBackup;
-import com.fathzer.jdbbackup.cron.parameters.Parameters.Task;
+import com.fathzer.jdbbackup.cron.parameters.Task;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -102,5 +102,4 @@ public class Main {
 		}
 		return file;
 	}
-
 }
