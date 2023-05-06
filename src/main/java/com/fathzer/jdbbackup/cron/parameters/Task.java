@@ -31,16 +31,20 @@ public class Task {
 		this.schedule = getCron4JSchedule(schedule);
 	}
 
-	private String getCron4JSchedule(String schedule) {
+	static String getCron4JSchedule(String schedule) {
 		if ("@yearly".equals(schedule) || "@annually".equals(schedule)) { //$NON-NLS-1$ //$NON-NLS-2$
 			return "0 0 1 1 *"; //$NON-NLS-1$
-		} else if ("@monthly".equals(schedule)) { //$NON-NLS-1$
+		}
+		if ("@monthly".equals(schedule)) { //$NON-NLS-1$
 			return "0 0 1 * *"; //$NON-NLS-1$
-		} else if ("@weekly".equals(schedule)) { //$NON-NLS-1$
+		}
+		if ("@weekly".equals(schedule)) { //$NON-NLS-1$
 			return "0 0 * * 0"; //$NON-NLS-1$
-		} else if ("@daily".equals(schedule) || "@midnight".equals(schedule)) { //$NON-NLS-1$ //$NON-NLS-2$
+		}
+		if ("@daily".equals(schedule) || "@midnight".equals(schedule)) { //$NON-NLS-1$ //$NON-NLS-2$
 			return "0 0 * * *"; //$NON-NLS-1$
-		} else if ("@hourly".equals(schedule)) { //$NON-NLS-1$
+		}
+		if ("@hourly".equals(schedule)) { //$NON-NLS-1$
 			return "0 * * * *"; //$NON-NLS-1$
 		} else {
 			// Verify the pattern is ok

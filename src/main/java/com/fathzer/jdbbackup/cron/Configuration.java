@@ -6,10 +6,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.DatabindException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fathzer.jdbbackup.JDbBackup;
-import com.fathzer.jdbbackup.cron.parameters.Parameters;
 import com.fathzer.jdbbackup.cron.parameters.Task;
 import com.fathzer.plugin.loader.utils.ProxySettings;
 
@@ -26,12 +27,13 @@ class Configuration {
 	private ProxySettings proxy;
 	private List<Task> tasks;
 	
-	Configuration(Parameters params) {
-		if (params.getTasks()==null || params.getTasks().isEmpty()) {
+	@JsonCreator
+	private Configuration(@JsonProperty("proxy") String proxy, @JsonProperty("tasks") List<Task> tasks) {
+		if (tasks==null || tasks.isEmpty()) {
 			throw new IllegalArgumentException("Tasks can't be null or empty");
 		}
-		this.proxy = params.getProxy() == null ? null : ProxySettings.fromString(params.getProxy());
-		this.tasks = params.getTasks();
+		this.proxy = proxy == null ? null : ProxySettings.fromString(proxy);
+		this.tasks = tasks;
 	}
 	
 	static Configuration read(Path path) throws IOException {
@@ -43,7 +45,7 @@ class Configuration {
 	
 	static Configuration read(InputStream in) throws IOException {
 		try {
-			return new Configuration(MAPPER.readValue(in, Parameters.class));
+			return MAPPER.readValue(in, Configuration.class);
 		} catch (DatabindException e) {
 			throw new IllegalArgumentException(e);
 		}

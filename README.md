@@ -46,7 +46,8 @@ JSon attributes:
   - name: The task's name.
   - schedule: The task's schedule. This attribute accepts [*cron-like* patterns](https://www.sauronsoftware.it/projects/cron4j/manual.php#p02) and the following values:
     - @hourly: Every hour on the hour.
-    - @daily: Every day at midnight.
+    - @daily or @midnight: Every day at midnight.
+    - @weekly: Every Sunday at midnight
     - @monthly: Every month the first day of the month at midnight.
     - @yearly or @annually: Every year the first day of the year at midnight.
   - source: The data source to backup.
