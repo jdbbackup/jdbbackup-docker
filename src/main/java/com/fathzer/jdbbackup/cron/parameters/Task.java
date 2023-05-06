@@ -2,6 +2,9 @@ package com.fathzer.jdbbackup.cron.parameters;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import it.sauronsoftware.cron4j.InvalidPatternException;
 import it.sauronsoftware.cron4j.SchedulingPattern;
 import lombok.Getter;
@@ -13,7 +16,8 @@ public class Task {
 	private List<String> destinations;
 	private String schedule;
 
-	public Task(String name, String source, List<String> destinations, String schedule) {
+	@JsonCreator
+	public Task(@JsonProperty("name") String name, @JsonProperty("source") String source, @JsonProperty("destinations") List<String> destinations, @JsonProperty("schedule") String schedule) {
 		// Verify arguments
 		validate(name, "Name");
 		validate(source, "Source");

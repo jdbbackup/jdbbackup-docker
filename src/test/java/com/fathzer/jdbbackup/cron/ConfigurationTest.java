@@ -29,7 +29,29 @@ class ConfigurationTest {
 
 		illegal("");
 		illegal("{}");
+		illegal("{'tasks':[]}");
+
+		// Wrong names
+		illegal("{'tasks':[{'schedule':'@daily','source':'fake://xxx','destinations':['file://backup']}]}");
+		illegal("{'tasks':[{'name':null,'schedule':'@daily','source':'fake://xxx','destinations':['file://backup']}]}");
+
+		// Wrong schedule
+		illegal("{'tasks':[{'name':'name','source':'fake://xxx','destinations':['file://backup']}]}");
+		illegal("{'tasks':[{'name':'name','schedule':null,'source':'fake://xxx','destinations':['file://backup']}]}");
+		illegal("{'tasks':[{'name':'name','schedule':'@unknown','source':'fake://xxx','destinations':['file://backup']}]}");
 		
+		// Wrong source
+		illegal("{'tasks':[{'name':'name','schedule':'@daily','destinations':['file://backup']}]}");
+		illegal("{'tasks':[{'name':'name','schedule':'@daily','source':null,'destinations':['file://backup']}]}");
+		illegal("{'tasks':[{'name':'name','schedule':'@daily','source':{},'destinations':['file://backup']}]}");
+		illegal("{'tasks':[{'name':'name','schedule':'@daily','source':'','destinations':['file://backup']}]}");
+
+		// Wrong destinations
+		illegal("{'tasks':[{'name':'name','schedule':'@daily','source':'fake://xxx'}");
+		illegal("{'tasks':[{'name':'name','schedule':'@daily','source':'fake://xxx','destinations':[]}]}");
+		illegal("{'tasks':[{'name':'name','schedule':'@daily','source':'fake://xxx','destinations':'xxxx'}]}");
+		illegal("{'tasks':[{'name':'name','schedule':'@daily','source':'fake://xxx','destinations':[null]}]}");
+
 		illegal("{'proxy':'wrong','tasks':[{'name':'name','schedule':'@daily','source':'fake:\\xxx','destinations':['file://backup']}]}");
 	}
 	

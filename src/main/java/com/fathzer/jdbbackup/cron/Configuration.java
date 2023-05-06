@@ -8,9 +8,7 @@ import java.util.List;
 
 import com.fasterxml.jackson.databind.DatabindException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fathzer.jdbbackup.JDbBackup;
-import com.fathzer.jdbbackup.cron.json.TaskDeserializer;
 import com.fathzer.jdbbackup.cron.parameters.Parameters;
 import com.fathzer.jdbbackup.cron.parameters.Task;
 import com.fathzer.plugin.loader.utils.ProxySettings;
@@ -24,12 +22,6 @@ import lombok.extern.slf4j.Slf4j;
 @Getter(value = AccessLevel.PACKAGE)
 class Configuration {
 	private static final ObjectMapper MAPPER = new ObjectMapper();
-	
-	static {
-		SimpleModule module = new SimpleModule();
-		module.addDeserializer(Task.class, new TaskDeserializer());
-		MAPPER.registerModule(module);
-	}
 	
 	private ProxySettings proxy;
 	private List<Task> tasks;
