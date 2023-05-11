@@ -94,5 +94,6 @@ The default configuration logs to the console, rejecting entries below *info* le
 If you want to change logback configuration, please have a look at [the logback manual](https://logback.qos.ch/manual/configuration.html).
 
 # TODO
-Detect missing configuration attributes  
-Verify destination is valid regarding validate method
+- Fixes README badges
+- Detect missing configuration attributes  
+- Verify destination is valid regarding validate method
