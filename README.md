@@ -1,5 +1,5 @@
-![Maven Central](https://img.shields.io/maven-central/v/com.fathzer/jdbbackup-docker)
-![License](https://img.shields.io/badge/license-Apache%202.0-brightgreen.svg)
+[![Maven Central](https://img.shields.io/maven-central/v/com.fathzer/jdbbackup-docker)](https://central.sonatype.com/artifact/com.fathzer/jdbbackup-docker)
+[![License](https://img.shields.io/badge/license-Apache%202.0-brightgreen.svg)]((https://github.com/jdbbackup/jdbbackup-docker/blob/master/LICENSE))
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=jdbbackup_jdbbackup-docker&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=jdbbackup_jdbbackup-docker)
 [![javadoc](https://javadoc.io/badge2/com.fathzer/jdbbackup-docker/javadoc.svg)](https://javadoc.io/doc/com.fathzer/jdbbackup-docker)
 
@@ -20,6 +20,8 @@ In order to use the MySQL source, *mysqldump* command must be installed on the m
 
 ### With Docker
 **TODO**
+
+```docker run -d --rm --volume /home/jma/git/jdbbackup-docker/tasks.json:/tasks.json fathzer/db-backup```
 
 By default, the path of the [configuration file](#configuration-file) is */tasks.json*.  
 You can also easily pass a local file to the image using the --volume docker option: 
@@ -94,6 +96,5 @@ The default configuration logs to the console, rejecting entries below *info* le
 If you want to change logback configuration, please have a look at [the logback manual](https://logback.qos.ch/manual/configuration.html).
 
 # TODO
-- Fixes README badges
 - Detect missing configuration attributes  
 - Verify destination is valid regarding validate method
