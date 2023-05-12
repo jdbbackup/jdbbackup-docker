@@ -95,10 +95,6 @@ Logging is based on the [slf4j framework](https://www.slf4j.org/). Logs are boun
 The default configuration logs to the console, rejecting entries below *info* level.  
 If you want to change logback configuration, please have a look at [the logback manual](https://logback.qos.ch/manual/configuration.html).
 
-# TODO
-- Detect missing configuration attributes  
-- Verify destination is valid regarding validate method
-
 # Developer notes
 - How to build Docker image: ```mvn package -Pdocker```
 
