@@ -7,7 +7,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.function.Function;
 
+import com.fathzer.jdbbackup.DestinationManager;
 import com.fathzer.jdbbackup.JDbBackup;
 import com.fathzer.jdbbackup.cron.parameters.Task;
 
@@ -60,12 +62,14 @@ public class Main {
 	}
 	
 	private void check(Task task) {
-		task.getDestinations().forEach(this::checkDestination);
-		//TODO How to check DB seems ok?
+		//TODO Unfortunately, SourceManager have no method to check source uri is correct. Maybe in a future release of jdbbackup-core...
+		final Function<String, CharSequence> srcManager = backupEngine.getSourceManagers().get(task.getSource()).getExtensionBuilder();
+		task.getDestinations().forEach(d -> this.checkDestination(d, srcManager));
 	}
 
-	private void checkDestination(String destination) {
-//TODO		JDbBackup.getDestinationManagers().get(destination)
+	private void checkDestination(String destination, Function<String, CharSequence> extBuilder) {
+		final DestinationManager<?> destinationManager = backupEngine.getDestinationManagers().get(destination);
+		destinationManager.validate(destination, extBuilder);
 	}
 
 	private Configuration getConfiguration(String confFilePath) {
