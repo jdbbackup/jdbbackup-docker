@@ -37,7 +37,7 @@ class Configuration {
 	}
 	
 	static Configuration read(Path path) throws IOException {
-		log.info("Loading tasks file in {}", path);
+		log.info("Loading tasks file from {}", path);
 		try (InputStream in = Files.newInputStream(path)) {
 			return read(in);
 		}

@@ -98,3 +98,8 @@ If you want to change logback configuration, please have a look at [the logback 
 # TODO
 - Detect missing configuration attributes  
 - Verify destination is valid regarding validate method
+
+# Developer notes
+- How to build Docker image: ```mvn package -Pdocker```
+
+

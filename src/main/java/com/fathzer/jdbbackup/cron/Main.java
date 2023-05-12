@@ -92,13 +92,13 @@ public class Main {
 				filePath = "tasks.json"; //$NON-NLS-1$
 			}
 		}
-		Path file = Paths.get(filePath);
+		Path file = Paths.get(filePath).toAbsolutePath();
 		if (!Files.exists(file)) {
-			throw new IOException("File "+filePath+" does not exists");
+			throw new IOException("File "+file+" does not exists");
 		} else if (!Files.isRegularFile(file)) {
-			throw new IOException("File "+filePath+" is not a file");
+			throw new IOException("File "+file+" is not a file");
 		} else if (!Files.isReadable(file)) {
-			throw new IOException("Can't read file "+filePath);
+			throw new IOException("Can't read file "+file);
 		}
 		return file;
 	}
