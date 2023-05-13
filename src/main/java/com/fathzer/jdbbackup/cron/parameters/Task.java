@@ -9,6 +9,8 @@ import it.sauronsoftware.cron4j.InvalidPatternException;
 import it.sauronsoftware.cron4j.SchedulingPattern;
 import lombok.Getter;
 
+/** A backup task.
+ */
 @Getter
 public class Task {
 	private String name;
@@ -16,6 +18,13 @@ public class Task {
 	private List<String> destinations;
 	private String schedule;
 
+	/** Constructor.
+	 * <br>All arguments should not be null or empty
+	 * @param name The task's name.
+	 * @param source The backup data source
+	 * @param destinations The backup destinations
+	 * @param schedule The schedule in cron format or one of the supported abbreviated (@yearly, @annually, @monthly, @weekly, @daily, @midnight, @hourly)
+	 */
 	@JsonCreator
 	public Task(@JsonProperty("name") String name, @JsonProperty("source") String source, @JsonProperty("destinations") List<String> destinations, @JsonProperty("schedule") String schedule) {
 		// Verify arguments
