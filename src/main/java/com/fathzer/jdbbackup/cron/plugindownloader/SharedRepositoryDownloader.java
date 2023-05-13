@@ -17,6 +17,8 @@ import com.fathzer.jdbbackup.utils.Cache;
 
 import lombok.Setter;
 
+/** A downloader that share a single underlying json to manage source or destination repository.
+ */
 public class SharedRepositoryDownloader extends AbstractManagersDownloader {
 	private static class RepositoryDecoder implements Supplier<Repository> {
 		@Setter
@@ -35,6 +37,12 @@ public class SharedRepositoryDownloader extends AbstractManagersDownloader {
 	private final Cache<Repository> cache;
 	private final Function<Repository, Map<String,URI>> repoToUriMap;
 
+	/** Constructor.
+	 * @param uri The repository URI
+	 * @param localDirectory The directory where to store the downloaded managers.
+	 * @param cache A Cache to store the repository
+	 * @param repoToUriMap A function that returns the repository (source or destination)
+	 */
 	public SharedRepositoryDownloader(URI uri, Path localDirectory, Cache<Repository> cache, Function<Repository, Map<String,URI>> repoToUriMap) {
 		super(uri, localDirectory);
 		this.cache = cache;

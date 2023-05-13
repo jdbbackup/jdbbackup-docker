@@ -25,6 +25,9 @@ public class Main {
 	
 	private JDbBackup backupEngine;
 	
+	/** Constructor.
+	 * @param jDbBackup The instance used to perform backups
+	 */
 	public Main(JDbBackup jDbBackup) {
 		this.backupEngine = jDbBackup;
 	}
