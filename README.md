@@ -21,7 +21,7 @@ In order to use the MySQL source, *mysqldump* command must be installed on the m
 ### With Docker
 You can run the container with the following command
 
-```docker run -d --rm --volume /home/jma/git/jdbbackup-docker/tasks.json:/tasks.json fathzer/db-backup```
+```docker run -d --rm --volume /home/jma/git/jdbbackup-docker/tasks.json:/home/jdbbackup/tasks.json fathzer/db-backup```
 
 By default, the path of the [configuration file](#configuration-file) is *home/jdbbackup/tasks.json*.  
 You can also easily pass a local file to the image using the --volume docker option: 
