@@ -11,6 +11,7 @@ import java.util.function.Function;
 
 import com.fathzer.jdbbackup.DestinationManager;
 import com.fathzer.jdbbackup.JDbBackup;
+import com.fathzer.jdbbackup.SourceManager;
 import com.fathzer.jdbbackup.cron.parameters.Task;
 
 import lombok.extern.slf4j.Slf4j;
@@ -66,13 +67,15 @@ public class Main {
 	
 	private void check(Task task) {
 		//TODO Unfortunately, SourceManager have no method to check source uri is correct. Maybe in a future release of jdbbackup-core...
-		final Function<String, CharSequence> srcManager = backupEngine.getSourceManagers().get(task.getSource()).getExtensionBuilder();
+		final SourceManager sourceManager = backupEngine.getSourceManagers().get(new Destination(task.getSource()).getScheme());
+		final Function<String, CharSequence> srcManager = sourceManager.getExtensionBuilder();
 		task.getDestinations().forEach(d -> this.checkDestination(d, srcManager));
 	}
 
 	private void checkDestination(String destination, Function<String, CharSequence> extBuilder) {
-		final DestinationManager<?> destinationManager = backupEngine.getDestinationManagers().get(destination);
-		destinationManager.validate(destination, extBuilder);
+		final Destination uri = new Destination(destination);
+		final DestinationManager<?> destinationManager = backupEngine.getDestinationManagers().get(uri.getScheme());
+		destinationManager.validate(uri.getPath(), extBuilder);
 	}
 
 	private Configuration getConfiguration(String confFilePath) {
