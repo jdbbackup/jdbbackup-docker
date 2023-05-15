@@ -12,20 +12,20 @@ A ready to use docker container, based on [jdbbackup-core](https://github.com/jd
 This application requires Java11+.
 
 The [artifact deployed in Maven central](https://repo1.maven.org/maven2/com/fathzer/jdbbackup-docker/1.0.0/jdbbackup-docker-1.0.0.jar) is a runnable jar.  
-Launch it with ```java -jar jdbbackup-docker-1.0.0.jar config.json``` where *config.json* is the configuration file ([see below](#configuration-file)) or set the environment variable *TASKS_PATH* to the path of the configuration file and launch it with ```java -jar jdbbackup-docker-1.0.0.jar```. You may also leave *TASKS_PATH* unset, its default value is *task.json*.
+Launch it with ```java -jar jdbbackup-docker-1.0.0.jar config.json``` where *config.json* is the configuration file ([see below](#configuration-file)) or set the environment variable *TASKS_PATH* to the path of the configuration file and launch it with ```java -jar jdbbackup-docker-1.0.0.jar```. You may also leave *TASKS_PATH* unset, its default value is *tasks.json*.
 
 If you want to include this application in a Java program, the main class is *com.fathzer.jdbbackup.cron.Main*.
 
 In order to use the MySQL source, *mysqldump* command must be installed on the machine that runs this application.
 
 ### With Docker
-**TODO**
+You can run the container with the following command
 
 ```docker run -d --rm --volume /home/jma/git/jdbbackup-docker/tasks.json:/tasks.json fathzer/db-backup```
 
-By default, the path of the [configuration file](#configuration-file) is */tasks.json*.  
+By default, the path of the [configuration file](#configuration-file) is *home/jdbbackup/tasks.json*.  
 You can also easily pass a local file to the image using the --volume docker option: 
-```--volume /home/account/path/backupTasks.json:/tasks.json```  
+```--volume /home/account/path/backupTasks.json:/home/jdbbackup/tasks.json```  
 You can also define the *TASKS_PATH* environment variable to use another file path.
 
 ## Configuration file
@@ -64,9 +64,9 @@ To add your own plugins, define the **pluginsDirectory** environment variable an
 Example: ```-e "pluginsDirectory=/plugins" --volume /home/account/path/plugins:/plugins```
 
 ### Plugin repository
-This image only contains MySQL database source manager and file destination manager. If another source/destination is referenced in the configuration file, without being added through the **pluginsDirectory**, the container will automatically search it in an Internet plugin repository.  
+This image only contains MySQL/MariaDB database source manager and file destination manager. If another source/destination is referenced in the configuration file, without being added through the **pluginsDirectory**, the container will automatically search it in an Internet plugin repository.  
 
-If you want to delete all already downloaded plugins and reload useful ones at container startup, set the **clearDownloadedPlugins** system property to true.
+If you want to delete all previously downloaded plugins and reload useful ones at container startup, set the **clearDownloadedPlugins** system property to true.
 
 ### Alternate plugin repository
 By default, the image uses the plugin repository whose root URI is https://jdbbackup.github.io/web/repository/.  
@@ -96,6 +96,6 @@ The default configuration logs to the console, rejecting entries below *info* le
 If you want to change logback configuration, please have a look at [the logback manual](https://logback.qos.ch/manual/configuration.html).
 
 # Developer notes
-- How to build Docker image: ```mvn package -Pdocker```
+- How to build the Docker image?: ```mvn package -Pdocker```
 
 
