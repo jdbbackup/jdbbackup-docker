@@ -11,8 +11,8 @@ A ready to use docker container, based on [jdbbackup-core](https://github.com/jd
 ### Without Docker
 This application requires Java11+.
 
-The [artifact deployed in Maven central](https://repo1.maven.org/maven2/com/fathzer/jdbbackup-docker/1.0.0/jdbbackup-docker-1.0.0.jar) is a runnable jar.  
-Launch it with ```java -jar jdbbackup-docker-1.0.0.jar config.json``` where *config.json* is the configuration file ([see below](#configuration-file)) or set the environment variable *TASKS_PATH* to the path of the configuration file and launch it with ```java -jar jdbbackup-docker-1.0.0.jar```. You may also leave *TASKS_PATH* unset, its default value is *tasks.json*.
+The [artifact deployed in Maven central](https://repo1.maven.org/maven2/com/fathzer/jdbbackup-docker/1.1.0/jdbbackup-docker-1.1.0.jar) is a runnable jar.  
+Launch it with ```java -jar jdbbackup-docker-1.1.0.jar config.json``` where *config.json* is the configuration file ([see below](#configuration-file)) or set the environment variable *TASKS_PATH* to the path of the configuration file and launch it with ```java -jar jdbbackup-docker-1.1.0.jar```. You may also leave *TASKS_PATH* unset, its default value is *tasks.json*.
 
 If you want to include this application in a Java program, the main class is *com.fathzer.jdbbackup.cron.Main*.
 
@@ -96,6 +96,18 @@ The default configuration logs to the console, rejecting entries below *info* le
 If you want to change logback configuration, please have a look at [the logback manual](https://logback.qos.ch/manual/configuration.html).
 
 # Developer notes
-- How to build the Docker image?: ```mvn package -Pdocker```
+- Build the jar:
+  ```bash
+  cd launcher
+  mvn package -DskipTests
+  ```
+- Build the Docker image (from the repository root):
+
+  ```bash
+  docker build -t fathzer/db-backup:1.1.0-jre-25.0.4 --build-arg JAVA_BASE_IMAGE=eclipse-temurin:25.0.4_7-jre --build-arg JAR_FILE=launcher/target/jdbbackup.jar .
+  ```
+  The `JAVA_BASE_IMAGE` build arg sets the base JRE image. The `JAR_FILE` build arg points to the jar relative to the repository root (the Docker context).
+
+  > **Warning**: do not push the built image to Docker Hub unless you're sure about the tag format; it may not follow the naming convention used by the official images.
 
 

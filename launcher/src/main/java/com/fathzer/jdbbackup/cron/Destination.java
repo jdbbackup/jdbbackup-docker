@@ -3,7 +3,7 @@ package com.fathzer.jdbbackup.cron;
 import static com.fathzer.jdbbackup.DestinationManager.URI_PATH_SEPARATOR;
 
 /** This a copy of the jdbbackup-core non public com.fathzer.jdbbackup.Destination class.<br>
- * //TODO Maybe it should be better to prevent this copy by maling it public in jdbbackup-core
+ * //TODO Maybe it should be better to prevent this copy by making it public in jdbbackup-core
  */
 class Destination {
 	private String type;
