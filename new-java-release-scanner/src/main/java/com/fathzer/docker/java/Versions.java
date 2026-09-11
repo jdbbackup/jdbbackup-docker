@@ -1,13 +1,8 @@
 package com.fathzer.docker.java;
 
 import java.io.IOException;
-import java.time.Duration;
-import java.time.Instant;
-import java.util.List;
 import java.util.regex.Pattern;
-
-import com.fathzer.docker.java.DockerHubScanner.Tag;
-
+/** A basic test class to check Temurin versions */
 public class Versions {
 
     public static void main(String[] args) throws IOException, InterruptedException {

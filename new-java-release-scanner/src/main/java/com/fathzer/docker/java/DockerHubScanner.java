@@ -15,7 +15,7 @@ import java.util.function.Predicate;
 
 /** A generic Docker Hub API client that can list tags from any repository.
  * <BR>Authentication is optional but recommended to increase the Docker Hub API rate limit.
- * Use {@link #setCredentials(String, String)} to provide a Docker Hub username and password
+ * Use the {@link #DockerHubScanner(String, String)} constructor to provide a Docker Hub username and password
  * (or Personal Access Token). The access token is obtained lazily on the first API call
  * and refreshed automatically when it expires.
  */
