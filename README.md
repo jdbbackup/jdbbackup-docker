@@ -72,6 +72,8 @@ If you want to delete all previously downloaded plugins and reload useful ones a
 By default, the image uses the plugin repository whose root URI is https://jdbbackup.github.io/web/repository/.  
 The full URL is completed with the image version, for instance [https://jdbbackup.github.io/web/repository/1.0.0.json](https://jdbbackup.github.io/web/repository/1.0.0).
 
+> **Warning**: when the image version changes (i.e. the `launcher/pom.xml` version), a corresponding `<version>.json` file must be created in the [web repository](https://github.com/jdbbackup/web) under `docs/repository/`. Otherwise, the plugin auto-download feature will fail with a 404 error. See [TODO.md](TODO.md) for the planned evolution of this mechanism.
+
 If you want to use your own repository, put its root URI in **pluginRepository** system property.  
 Your repository should return a json file like the following at the address *root*/*version*.
 
