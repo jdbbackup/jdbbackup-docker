@@ -1,0 +1,128 @@
+name: Build Docker image for new Java releases
+
+on:
+  # Weekly check for new Temurin releases (every Monday at 04:17 UTC)
+  schedule:
+    - cron: "17 4 * * 1"
+
+  # Allow manual trigger
+  workflow_dispatch:
+  push:
+    branches:
+      - "main"
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  DOCKER_IMAGE: fathzer/db-backup
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      # ------------------------------------------------------------
+      # 1. Set up JDK 21 and build the scanner
+      # ------------------------------------------------------------
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          java-version: 21
+          distribution: 'temurin'
+
+      - name: Cache Maven packages
+        uses: actions/cache@v5
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+
+      - name: Build new-java-release-scanner
+        working-directory: new-java-release-scanner
+        run: mvn -B -q package
+
+      # ------------------------------------------------------------
+      # 2. Find the launcher version and target Java version on this branch
+      # ------------------------------------------------------------
+      - name: Get launcher version and Java version
+        id: app-version
+        run: |
+          APP_VERSION=$(mvn -q -DforceStdout help:evaluate -Dexpression=project.version -f launcher/pom.xml)
+          JAVA_VERSION=$(mvn -q -DforceStdout help:evaluate -Dexpression=maven.compiler.target -f launcher/pom.xml)
+          echo "version=$APP_VERSION" >> "$GITHUB_OUTPUT"
+          echo "javaVersion=$JAVA_VERSION" >> "$GITHUB_OUTPUT"
+          echo "Launcher version: $APP_VERSION"
+          echo "Target Java version: $JAVA_VERSION"
+
+      # ------------------------------------------------------------
+      # 3. Find the Java tag to build (or skip if already published)
+      # ------------------------------------------------------------
+      - name: Scan Docker Hub for new Java version
+        id: scan
+        env:
+          DOCKER_USER: ${{ secrets.DOCKER_USER }}
+          DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
+        run: |
+          set -euo pipefail
+          SCANNER_JAR="new-java-release-scanner/target/docker-java-version-scanner-1.0.0.jar"
+          RESULT=$(java -jar "$SCANNER_JAR" "${{ steps.app-version.outputs.version }}" "${{ steps.app-version.outputs.javaVersion }}" "${DOCKER_IMAGE}")
+          echo "$RESULT"
+          SHOULD_BUILD=$(echo "$RESULT" | jq -r '.shouldBuild')
+          echo "shouldBuild=$SHOULD_BUILD" >> "$GITHUB_OUTPUT"
+          if [ "$SHOULD_BUILD" = "true" ]; then
+            BASE_IMAGE=$(echo "$RESULT" | jq -r '.baseImage')
+            echo "baseImage=$BASE_IMAGE" >> "$GITHUB_OUTPUT"
+            {
+              echo "tags<<EOF"
+              echo "$RESULT" | jq -r '.tags[]' | sed "s|^|${DOCKER_IMAGE}:|"
+              echo "EOF"
+            } >> "$GITHUB_OUTPUT"
+          fi
+
+      # ------------------------------------------------------------
+      # 4. Download the launcher jar from Maven Central
+      #    (fails if the version is not published yet)
+      # ------------------------------------------------------------
+      - name: Download jar from Maven Central
+        if: steps.scan.outputs.shouldBuild == 'true'
+        run: |
+          set -euo pipefail
+          VERSION="${{ steps.app-version.outputs.version }}"
+          JAR_URL="https://repo1.maven.org/maven2/com/fathzer/jdbbackup-docker/${VERSION}/jdbbackup-docker-${VERSION}.jar"
+          echo "Downloading $JAR_URL"
+          mkdir -p launcher/target
+          curl -fSL -o launcher/target/jdbbackup.jar "$JAR_URL"
+
+      # ------------------------------------------------------------
+      # 5. Build and push the Docker image
+      # ------------------------------------------------------------
+      - name: Login to Docker Hub
+        if: steps.scan.outputs.shouldBuild == 'true'
+        uses: docker/login-action@v4
+        with:
+          username: ${{ secrets.DOCKER_USER }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+
+      - name: Setup Buildx
+        if: steps.scan.outputs.shouldBuild == 'true'
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build and push image
+        if: steps.scan.outputs.shouldBuild == 'true'
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: true
+          build-args: |
+            JAVA_BASE_IMAGE=${{ steps.scan.outputs.baseImage }}
+            JAR_FILE=launcher/target/jdbbackup.jar
+          tags: ${{ steps.scan.outputs.tags }}
+          labels: |
+            org.opencontainers.image.title=db-backup
+            org.opencontainers.image.version=${{ steps.app-version.outputs.version }}
+            org.opencontainers.image.base.name=${{ steps.scan.outputs.baseImage }}

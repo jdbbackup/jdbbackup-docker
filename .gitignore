@@ -1,5 +1,7 @@
 target/
+bin/
 .settings/
 dependency-reduced-pom.xml
-/.classpath
-/.project
+.classpath
+.project
+.vscode/
